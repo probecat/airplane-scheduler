@@ -16,6 +16,16 @@ android {
         targetSdk 37
         versionCode 1
         versionName '1.0'
+        manifestPlaceholders = [appLabel: 'Airplane Scheduler']
+    }
+
+    buildTypes {
+        // Installs beside the signed release instead of clashing with its signature.
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+            manifestPlaceholders = [appLabel: 'Airplane Scheduler (debug)']
+        }
     }
 
     def releaseKeystore = System.getenv('RELEASE_KEYSTORE')
