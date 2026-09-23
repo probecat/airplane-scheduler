@@ -139,6 +139,11 @@ public final class MainActivity extends Activity {
         Shizuku.addRequestPermissionResultListener(permissionListener);
         Shizuku.addBinderReceivedListenerSticky(binderListener);
         refresh();
+        // Covers updates from before the reminder existed; a pending Shizuku prompt asks afterwards instead.
+        boolean shizukuPrompt = Shizuku.pingBinder() && !hasShizukuAccess();
+        if (state == null && Scheduler.isSaved(this) && Scheduler.remindShizuku(this) && !shizukuPrompt) {
+            requestNotifications();
+        }
     }
 
     @Override
