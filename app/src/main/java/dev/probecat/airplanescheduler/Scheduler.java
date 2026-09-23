@@ -12,14 +12,18 @@ import java.time.ZonedDateTime;
 final class Scheduler {
     static final String START = "dev.probecat.airplanescheduler.START";
     static final String END = "dev.probecat.airplanescheduler.END";
+    static final String REMIND = "dev.probecat.airplanescheduler.REMIND";
+    static final int REMIND_BEFORE_MINUTES = 60;
     private static final String PREFS = "schedule";
 
-    static void save(Context context, int start, int end, boolean disableWifi, boolean enableWifi) {
+    static void save(Context context, int start, int end, boolean disableWifi, boolean enableWifi,
+            boolean remindShizuku) {
         preferences(context).edit()
                 .putInt("start", start)
                 .putInt("end", end)
                 .putBoolean("disableWifi", disableWifi)
                 .putBoolean("enableWifi", enableWifi)
+                .putBoolean("remindShizuku", remindShizuku)
                 .putBoolean("cleanupPending", false)
                 .putBoolean("saved", true)
                 .apply();
@@ -66,6 +70,10 @@ final class Scheduler {
         return preferences(context).getBoolean("enableWifi", true);
     }
 
+    static boolean remindShizuku(Context context) {
+        return preferences(context).getBoolean("remindShizuku", true);
+    }
+
     static boolean shouldEnableNow(Context context) {
         int start = start(context);
         int end = end(context);
@@ -75,31 +83,43 @@ final class Scheduler {
     }
 
     static void scheduleAll(Context context) {
-        cancel(context, true);
-        cancel(context, false);
+        cancel(context, START);
+        cancel(context, END);
+        cancel(context, REMIND);
         if (isSaved(context)) {
             schedule(context, true);
             schedule(context, false);
+            scheduleReminder(context);
+        }
+    }
+
+    static void schedule(Context context, boolean startEvent) {
+        schedule(context, startEvent ? START : END, startEvent ? start(context) : end(context));
+    }
+
+    static void scheduleReminder(Context context) {
+        if (isSaved(context) && remindShizuku(context)) {
+            schedule(context, REMIND, ScheduleTime.before(start(context), REMIND_BEFORE_MINUTES));
         }
     }
 
     @SuppressLint("MissingPermission")
-    static void schedule(Context context, boolean startEvent) {
+    private static void schedule(Context context, String action, int minute) {
         // Recompute each daily alarm in local time so clock and time-zone changes stay correct.
-        int minute = startEvent ? start(context) : end(context);
         ZonedDateTime now = ZonedDateTime.now();
         ZonedDateTime trigger = ScheduleTime.next(now, minute);
         AlarmManager alarms = context.getSystemService(AlarmManager.class);
-        alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger.toInstant().toEpochMilli(), intent(context, startEvent));
+        alarms.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger.toInstant().toEpochMilli(), intent(context, action));
     }
 
-    private static void cancel(Context context, boolean startEvent) {
-        context.getSystemService(AlarmManager.class).cancel(intent(context, startEvent));
+    private static void cancel(Context context, String action) {
+        context.getSystemService(AlarmManager.class).cancel(intent(context, action));
     }
 
-    private static PendingIntent intent(Context context, boolean startEvent) {
-        Intent intent = new Intent(context, AlarmReceiver.class).setAction(startEvent ? START : END);
-        return PendingIntent.getBroadcast(context, startEvent ? 1 : 2, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    private static PendingIntent intent(Context context, String action) {
+        int requestCode = START.equals(action) ? 1 : END.equals(action) ? 2 : 3;
+        Intent intent = new Intent(context, AlarmReceiver.class).setAction(action);
+        return PendingIntent.getBroadcast(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     private static SharedPreferences preferences(Context context) {

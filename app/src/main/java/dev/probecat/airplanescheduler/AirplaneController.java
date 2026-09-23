@@ -79,19 +79,44 @@ final class AirplaneController {
                 finish.accept(false);
             }
         };
-        if (Shizuku.pingBinder()) {
-            bind.run();
-        } else {
-            Shizuku.OnBinderReceivedListener[] listener = new Shizuku.OnBinderReceivedListener[1];
-            listener[0] = () -> {
-                Shizuku.removeBinderReceivedListener(listener[0]);
+        awaitBinder(received -> {
+            if (received) {
                 bind.run();
-            };
-            Shizuku.addBinderReceivedListener(listener[0]);
-            main.postDelayed(() -> {
-                Shizuku.removeBinderReceivedListener(listener[0]);
+            } else {
                 finish.accept(false);
-            }, 7000);
+            }
+        });
+    }
+
+    // A freshly started process receives the Shizuku binder asynchronously, so give it a moment.
+    static void awaitBinder(Consumer<Boolean> done) {
+        if (Shizuku.pingBinder()) {
+            done.accept(true);
+            return;
+        }
+        Handler main = new Handler(Looper.getMainLooper());
+        AtomicBoolean completed = new AtomicBoolean();
+        Shizuku.OnBinderReceivedListener[] listener = new Shizuku.OnBinderReceivedListener[1];
+        listener[0] = () -> {
+            Shizuku.removeBinderReceivedListener(listener[0]);
+            if (completed.compareAndSet(false, true)) {
+                done.accept(true);
+            }
+        };
+        Shizuku.addBinderReceivedListener(listener[0]);
+        main.postDelayed(() -> {
+            Shizuku.removeBinderReceivedListener(listener[0]);
+            if (completed.compareAndSet(false, true)) {
+                done.accept(false);
+            }
+        }, 7000);
+    }
+
+    static boolean hasAccess() {
+        try {
+            return Shizuku.pingBinder() && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED;
+        } catch (RuntimeException e) {
+            return false;
         }
     }
 }

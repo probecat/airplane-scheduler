@@ -57,4 +57,17 @@ public final class ScheduleTimeTest {
         assertEquals(30, trigger.getMinute());
         assertTrue(trigger.isAfter(now));
     }
+
+    @Test
+    public void reminderWrapsBeforeMidnight() {
+        assertEquals(22 * 60, ScheduleTime.before(23 * 60, 60));
+        assertEquals(23 * 60 + 30, ScheduleTime.before(30, 60));
+        assertEquals(23 * 60, ScheduleTime.before(0, 60));
+    }
+
+    @Test
+    public void formatsTwentyFourHourTime() {
+        assertEquals("00:05", ScheduleTime.format(5));
+        assertEquals("23:59", ScheduleTime.format(23 * 60 + 59));
+    }
 }

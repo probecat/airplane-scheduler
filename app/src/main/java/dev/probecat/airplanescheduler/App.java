@@ -6,8 +6,12 @@ import rikka.shizuku.Shizuku;
 
 public final class App extends Application {
     // Reconcile a missed boundary whenever Shizuku starts or restarts later.
-    private final Shizuku.OnBinderReceivedListener listener =
-            () -> AirplaneController.applyCurrent(this, () -> {});
+    private final Shizuku.OnBinderReceivedListener listener = () -> {
+        if (AirplaneController.hasAccess()) {
+            ShizukuReminder.dismiss(this);
+        }
+        AirplaneController.applyCurrent(this, () -> {});
+    };
 
     @Override
     public void onCreate() {

@@ -1,5 +1,6 @@
 package dev.probecat.airplanescheduler;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlarmManager;
@@ -29,8 +30,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.Locale;
-
 import rikka.shizuku.Shizuku;
 
 @SuppressLint("SetTextI18n")
@@ -39,6 +38,7 @@ public final class MainActivity extends Activity {
     private EditText end;
     private CheckBox disableWifi;
     private CheckBox enableWifi;
+    private CheckBox remindShizuku;
     private Button remove;
     private TextView status;
     private TextView scheduleStatus;
@@ -50,6 +50,9 @@ public final class MainActivity extends Activity {
         refresh();
         if (grantResult == PackageManager.PERMISSION_GRANTED) {
             AirplaneController.applyCurrent(this, this::refresh);
+        }
+        if (Scheduler.isSaved(this) && Scheduler.remindShizuku(this)) {
+            requestNotifications();
         }
     });
 
@@ -137,6 +140,17 @@ public final class MainActivity extends Activity {
         enableWifi.setTextColor(getColor(R.color.app_on_surface));
         enableWifi.setChecked(Scheduler.enableWifi(this));
         options.addView(enableWifi, matchWrap());
+
+        remindShizuku = new CheckBox(this);
+        remindShizuku.setText("Shizuku reminder");
+        remindShizuku.setTextColor(getColor(R.color.app_on_surface));
+        remindShizuku.setChecked(Scheduler.remindShizuku(this));
+        remindShizuku.setOnCheckedChangeListener((view, checked) -> {
+            if (checked) {
+                requestNotifications();
+            }
+        });
+        options.addView(remindShizuku, matchWrap());
 
         LinearLayout actions = new LinearLayout(this);
         actions.setGravity(Gravity.CENTER_VERTICAL);
@@ -292,13 +306,19 @@ public final class MainActivity extends Activity {
             if (startMinute == endMinute) {
                 throw new IllegalArgumentException();
             }
-            Scheduler.save(this, startMinute, endMinute, disableWifi.isChecked(), enableWifi.isChecked());
+            Scheduler.save(this, startMinute, endMinute, disableWifi.isChecked(), enableWifi.isChecked(),
+                    remindShizuku.isChecked());
             Scheduler.scheduleAll(this);
             Toast.makeText(this, "Schedule saved", Toast.LENGTH_SHORT).show();
+            boolean prompting = false;
             if (hasShizukuAccess()) {
                 AirplaneController.applyCurrent(this, this::refresh);
             } else {
-                requestShizuku();
+                prompting = requestShizuku();
+            }
+            // Ask after the Shizuku prompt instead so the two dialogs don't stack.
+            if (remindShizuku.isChecked() && !prompting) {
+                requestNotifications();
             }
             refresh();
         } catch (IllegalArgumentException e) {
@@ -331,6 +351,9 @@ public final class MainActivity extends Activity {
                     + "Window: " + format(Scheduler.start(this)) + "–" + format(Scheduler.end(this)) + "\n"
                     + "Wi-Fi at start: " + (Scheduler.disableWifi(this) ? "disable" : "leave unchanged") + "\n"
                     + "Wi-Fi at end: " + (Scheduler.enableWifi(this) ? "enable" : "leave unchanged") + "\n"
+                    + "Shizuku reminder: " + (Scheduler.remindShizuku(this)
+                    ? format(ScheduleTime.before(Scheduler.start(this), Scheduler.REMIND_BEFORE_MINUTES)) : "off") + "\n"
+                    + "Notifications: " + (canNotify() ? "allowed" : "not allowed") + "\n"
                     + "Exact alarms: " + (getSystemService(AlarmManager.class).canScheduleExactAlarms()
                     ? "allowed" : "not allowed");
             TextView text = new TextView(this);
@@ -353,24 +376,32 @@ public final class MainActivity extends Activity {
         }
     }
 
-    private void requestShizuku() {
+    private boolean requestShizuku() {
         if (!Shizuku.pingBinder()) {
-            return;
+            return false;
         }
         try {
             if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
                 Shizuku.requestPermission(1);
+                return true;
             }
         } catch (RuntimeException ignored) {
         }
+        return false;
+    }
+
+    private void requestNotifications() {
+        if (!canNotify()) {
+            requestPermissions(new String[] {Manifest.permission.POST_NOTIFICATIONS}, 2);
+        }
+    }
+
+    private boolean canNotify() {
+        return checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
     }
 
     private boolean hasShizukuAccess() {
-        try {
-            return Shizuku.pingBinder() && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED;
-        } catch (RuntimeException e) {
-            return false;
-        }
+        return AirplaneController.hasAccess();
     }
 
     private void refresh() {
@@ -388,6 +419,7 @@ public final class MainActivity extends Activity {
             setPill(status, "Shizuku offline", "Shizuku is not running",
                     R.color.status_off_background, R.color.status_off_foreground);
         } else if (hasShizukuAccess()) {
+            ShizukuReminder.dismiss(this);
             setPill(status, "Shizuku ready", "Shizuku is ready",
                     R.color.status_ready_background, R.color.status_ready_foreground);
         } else {
@@ -417,7 +449,7 @@ public final class MainActivity extends Activity {
     }
 
     private static String format(int minute) {
-        return String.format(Locale.ROOT, "%02d:%02d", minute / 60, minute % 60);
+        return ScheduleTime.format(minute);
     }
 
     private static LinearLayout.LayoutParams matchWrap() {

@@ -8,6 +8,13 @@ public final class AlarmReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
+        if (Scheduler.REMIND.equals(action)) {
+            Scheduler.scheduleReminder(context);
+            // Only check Shizuku here; applying the schedule outside the window would end airplane mode.
+            PendingResult result = goAsync();
+            ShizukuReminder.check(context, result::finish);
+            return;
+        }
         if (Scheduler.START.equals(action) || Scheduler.END.equals(action)) {
             Scheduler.schedule(context, Scheduler.START.equals(action));
         } else {
