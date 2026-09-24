@@ -22,7 +22,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,9 +32,9 @@ public final class MainActivity extends Activity {
     private Ui ui;
     private TextView start;
     private TextView end;
-    private Switch disableWifi;
-    private Switch enableWifi;
-    private Switch remindShizuku;
+    private Toggle disableWifi;
+    private Toggle enableWifi;
+    private Toggle remindShizuku;
     private Button remove;
     private TextView status;
     private TextView scheduleStatus;

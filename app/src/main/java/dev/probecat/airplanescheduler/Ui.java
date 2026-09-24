@@ -6,7 +6,6 @@ import android.content.res.ColorStateList;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.RippleDrawable;
 import android.view.Gravity;
 import android.view.View;
@@ -14,7 +13,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.TextView;
 
 // The app's whole design system: a few tokens and the components built from them.
@@ -103,7 +101,7 @@ final class Ui {
     }
 
     // A short label, an info button for the long description, and a switch; the whole row toggles.
-    Switch toggle(LinearLayout parent, String value, String description, boolean checked) {
+    Toggle toggle(LinearLayout parent, String value, String description, boolean checked) {
         LinearLayout row = new LinearLayout(context);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setMinimumHeight(dp(TOUCH));
@@ -127,43 +125,12 @@ final class Ui {
 
         row.addView(new View(context), new LinearLayout.LayoutParams(0, 0, 1));
 
-        Switch toggle = new Switch(context);
+        Toggle toggle = new Toggle(context);
         toggle.setContentDescription(value);
-        toggle.setShowText(false);
-        toggle.setSwitchMinWidth(dp(52));
-        toggle.setThumbDrawable(switchThumb());
-        toggle.setTrackDrawable(switchTrack());
         toggle.setChecked(checked);
         row.addView(toggle);
         row.setOnClickListener(view -> toggle.toggle());
         return toggle;
-    }
-
-    // Track and thumb are single shapes whose colors follow the checked state. The track's 6dp side
-    // padding and the 20dp thumb leave an even 6dp gap around the thumb at both ends.
-    private Drawable switchTrack() {
-        GradientDrawable track = new GradientDrawable();
-        track.setColor(checkedColors(R.color.app_primary, R.color.app_outline));
-        track.setCornerRadius(dp(16));
-        track.setSize(dp(52), dp(32));
-        track.setPadding(dp(6), 0, dp(6), 0);
-        return track;
-    }
-
-    private Drawable switchThumb() {
-        GradientDrawable thumb = new GradientDrawable();
-        thumb.setShape(GradientDrawable.OVAL);
-        thumb.setColor(checkedColors(R.color.app_on_primary, R.color.app_surface));
-        // Centered by layer gravity; an InsetDrawable would report optical insets that shrink the track.
-        LayerDrawable centered = new LayerDrawable(new Drawable[] {thumb});
-        centered.setLayerSize(0, dp(20), dp(20));
-        centered.setLayerGravity(0, Gravity.CENTER);
-        return centered;
-    }
-
-    private ColorStateList checkedColors(int checked, int unchecked) {
-        return new ColorStateList(new int[][] {{android.R.attr.state_checked}, {}},
-                new int[] {color(checked), color(unchecked)});
     }
 
     private GradientDrawable box(int fill, int stroke) {
