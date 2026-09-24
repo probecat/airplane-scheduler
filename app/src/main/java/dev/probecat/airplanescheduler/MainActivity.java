@@ -48,9 +48,6 @@ public final class MainActivity extends Activity {
         if (grantResult == PackageManager.PERMISSION_GRANTED) {
             AirplaneController.applyCurrent(this, this::refresh);
         }
-        if (Scheduler.isSaved(this) && Scheduler.remindShizuku(this)) {
-            requestNotifications();
-        }
     });
 
     @Override
@@ -139,10 +136,14 @@ public final class MainActivity extends Activity {
         Shizuku.addRequestPermissionResultListener(permissionListener);
         Shizuku.addBinderReceivedListenerSticky(binderListener);
         refresh();
-        // Covers updates from before the reminder existed; a pending Shizuku prompt asks afterwards instead.
-        boolean shizukuPrompt = Shizuku.pingBinder() && !hasShizukuAccess();
-        if (state == null && Scheduler.isSaved(this) && Scheduler.remindShizuku(this) && !shizukuPrompt) {
-            requestNotifications();
+    }
+
+    // The reminder is useless without notifications, so a denial turns it back off.
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
+        if (requestCode == 2 && !canNotify()) {
+            remindShizuku.setChecked(false);
+            Toast.makeText(this, "Allow notifications to use the Shizuku reminder", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -201,15 +202,10 @@ public final class MainActivity extends Activity {
                     remindShizuku.isChecked());
             Scheduler.scheduleAll(this);
             Toast.makeText(this, "Schedule saved", Toast.LENGTH_SHORT).show();
-            boolean prompting = false;
             if (hasShizukuAccess()) {
                 AirplaneController.applyCurrent(this, this::refresh);
             } else {
-                prompting = requestShizuku();
-            }
-            // Ask after the Shizuku prompt instead so the two dialogs don't stack.
-            if (remindShizuku.isChecked() && !prompting) {
-                requestNotifications();
+                requestShizuku();
             }
             refresh();
         } catch (IllegalArgumentException e) {
@@ -267,18 +263,16 @@ public final class MainActivity extends Activity {
         }
     }
 
-    private boolean requestShizuku() {
+    private void requestShizuku() {
         if (!Shizuku.pingBinder()) {
-            return false;
+            return;
         }
         try {
             if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
                 Shizuku.requestPermission(1);
-                return true;
             }
         } catch (RuntimeException ignored) {
         }
-        return false;
     }
 
     private void requestNotifications() {

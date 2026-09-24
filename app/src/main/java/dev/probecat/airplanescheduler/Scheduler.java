@@ -71,7 +71,7 @@ final class Scheduler {
     }
 
     static boolean remindShizuku(Context context) {
-        return preferences(context).getBoolean("remindShizuku", true);
+        return preferences(context).getBoolean("remindShizuku", false);
     }
 
     static boolean shouldEnableNow(Context context) {
