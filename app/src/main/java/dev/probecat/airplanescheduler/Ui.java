@@ -1,6 +1,5 @@
 package dev.probecat.airplanescheduler;
 
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Typeface;
@@ -13,6 +12,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 
 // The app's whole design system: a few tokens and the components built from them.
@@ -115,12 +115,7 @@ final class Ui {
         info.setImageTintList(ColorStateList.valueOf(color(R.color.app_on_surface_muted)));
         info.setBackground(pressable(null, R.color.app_on_surface));
         info.setContentDescription("About " + value);
-        info.setTooltipText(description);
-        info.setOnClickListener(view -> new AlertDialog.Builder(context)
-                .setTitle(value)
-                .setMessage(description)
-                .setPositiveButton("OK", null)
-                .show());
+        info.setOnClickListener(view -> hint(view, description));
         row.addView(info, new LinearLayout.LayoutParams(dp(40), dp(40)));
 
         row.addView(new View(context), new LinearLayout.LayoutParams(0, 0, 1));
@@ -131,6 +126,21 @@ final class Ui {
         row.addView(toggle);
         row.setOnClickListener(view -> toggle.toggle());
         return toggle;
+    }
+
+    // A bubble under the anchor that needs no dismissal: it fades after a few seconds, and a tap
+    // elsewhere closes it while still reaching whatever was tapped.
+    void hint(View anchor, String value) {
+        TextView bubble = text(value, TEXT_SMALL, R.color.app_background);
+        bubble.setMaxWidth(dp(280));
+        bubble.setPadding(dp(12), dp(GAP), dp(12), dp(GAP));
+        bubble.setBackground(box(R.color.app_on_surface, 0));
+        bubble.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        PopupWindow popup = new PopupWindow(bubble,
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, false);
+        popup.setOutsideTouchable(true);
+        popup.showAsDropDown(anchor);
+        anchor.postDelayed(popup::dismiss, 3000);
     }
 
     private GradientDrawable box(int fill, int stroke) {
