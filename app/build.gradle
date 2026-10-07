@@ -14,8 +14,8 @@ android {
         applicationId 'dev.probecat.airplanescheduler'
         minSdk 37
         targetSdk 37
-        versionCode 5
-        versionName '1.2'
+        versionCode 6
+        versionName '1.2.1'
         manifestPlaceholders = [appLabel: 'Airplane Scheduler']
     }
 
