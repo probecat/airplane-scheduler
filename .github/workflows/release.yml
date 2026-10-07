@@ -45,5 +45,6 @@ jobs:
           GH_TOKEN: "${{ github.token }}"
           RELEASE_TAG: "${{ inputs.tag }}"
         run: |
-          cp app/build/outputs/apk/release/app-release.apk AirplaneScheduler.apk
-          gh release create "$RELEASE_TAG" AirplaneScheduler.apk --verify-tag --generate-notes --title "Airplane Scheduler $RELEASE_TAG"
+          apk="airplane-scheduler-${RELEASE_TAG#v}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "$apk"
+          gh release create "$RELEASE_TAG" "$apk" --verify-tag --generate-notes --title "Airplane Scheduler $RELEASE_TAG"
