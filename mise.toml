@@ -1,0 +1,33 @@
+[tools]
+java = "temurin-17"
+android-sdk = "23.0"
+
+[tasks.setup]
+description = "Accept SDK licenses and install SDK packages (build-tools are fetched by Gradle)"
+run = [
+  "yes | sdkmanager --licenses > /dev/null",
+  "sdkmanager 'platform-tools' 'platforms;android-37.0'",
+]
+
+[tasks.test]
+description = "Run unit tests"
+run = "./gradlew testDebugUnitTest"
+
+[tasks.lint]
+description = "Run Android Lint"
+run = "./gradlew lintDebug"
+
+[tasks.build]
+description = "Build the debug APK"
+run = "./gradlew assembleDebug"
+
+[tasks.check]
+description = "Test, lint, and build, as CI does"
+run = "./gradlew testDebugUnitTest lintDebug assembleDebug"
+
+[tasks.run]
+description = "Install the debug build on the USB device and launch it"
+run = [
+  "./gradlew installDebug",
+  "adb shell am start -n dev.probecat.airplanescheduler.debug/dev.probecat.airplanescheduler.MainActivity",
+]
