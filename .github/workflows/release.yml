@@ -48,3 +48,15 @@ jobs:
           apk="airplane-scheduler-${RELEASE_TAG#v}.apk"
           cp app/build/outputs/apk/release/app-release.apk "$apk"
           gh release create "$RELEASE_TAG" "$apk" --verify-tag --generate-notes --title "Airplane Scheduler $RELEASE_TAG"
+      - name: Remove APKs from all but the newest three releases
+        env:
+          GH_TOKEN: "${{ github.token }}"
+        run: |
+          gh release list --exclude-drafts --limit 1000 --json tagName,createdAt \
+            --jq 'sort_by(.createdAt) | reverse | .[3:][].tagName' |
+          while read -r tag; do
+            gh release view "$tag" --json assets --jq '.assets[].name | select(endswith(".apk"))' |
+            while read -r asset; do
+              gh release delete-asset "$tag" "$asset" --yes
+            done
+          done
