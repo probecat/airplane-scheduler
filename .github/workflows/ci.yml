@@ -1,6 +1,16 @@
 name: CI
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - app/**
+      - gradle/**
+      - build.gradle
+      - settings.gradle
+      - gradle.properties
+      - gradlew
+      - .github/workflows/ci.yml
   pull_request:
   workflow_dispatch:
 
