@@ -1,5 +1,7 @@
 plugins {
-    id 'com.android.application'
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -44,6 +46,7 @@ android {
 
     buildFeatures {
         aidl true
+        compose true
     }
 
     compileOptions {
@@ -53,8 +56,15 @@ android {
 }
 
 dependencies {
-    compileOnly 'androidx.annotation:annotation:1.10.0'
-    implementation 'dev.rikka.shizuku:api:13.1.5'
-    implementation 'dev.rikka.shizuku:provider:13.1.5'
-    testImplementation 'junit:junit:4.13.2'
+    implementation platform(libs.androidx.compose.bom)
+    implementation libs.androidx.compose.material3
+    implementation libs.androidx.compose.ui
+    implementation libs.androidx.activity.compose
+    implementation libs.androidx.navigation.compose
+    implementation libs.androidx.lifecycle.runtime.compose
+    implementation libs.androidx.core.ktx
+    implementation libs.kotlinx.serialization.json
+    implementation libs.shizuku.api
+    implementation libs.shizuku.provider
+    testImplementation libs.junit
 }
