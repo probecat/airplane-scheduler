@@ -1,5 +1,8 @@
 package dev.probecat.airplanescheduler.data
 
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.format.DateTimeParseException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -7,9 +10,6 @@ import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.format.DateTimeParseException
 
 @Serializable
 data class Schedule(

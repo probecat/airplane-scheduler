@@ -3,12 +3,6 @@ package dev.probecat.airplanescheduler.core
 import dev.probecat.airplanescheduler.core.ScheduleResolver.Ended
 import dev.probecat.airplanescheduler.core.ScheduleResolver.Window
 import dev.probecat.airplanescheduler.data.Schedule
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
 import java.time.DayOfWeek.FRIDAY
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.SATURDAY
@@ -16,6 +10,12 @@ import java.time.DayOfWeek.SUNDAY
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class ScheduleResolverTest {
     private fun at(hour: Int, minute: Int = 0) = hour * 60 + minute
@@ -121,9 +121,18 @@ class ScheduleResolverTest {
         val second = Schedule(id = 2, start = at(7), end = at(9), disableWifi = false, enableWifi = true)
         val schedules = listOf(second, first)
         // The chain starts on Thursday night, and Wi-Fi keeps the first window's option through 07:00.
-        assertEquals(Window(thursdayNight, inFirst = true, disableWifi = true), ScheduleResolver.window(schedules, friday(6, 59)))
-        assertEquals(Window(thursdayNight, inFirst = false, disableWifi = true), ScheduleResolver.window(schedules, friday(7)))
-        assertEquals(Window(thursdayNight, inFirst = false, disableWifi = true), ScheduleResolver.window(schedules, friday(8, 59)))
+        assertEquals(
+            Window(thursdayNight, inFirst = true, disableWifi = true),
+            ScheduleResolver.window(schedules, friday(6, 59)),
+        )
+        assertEquals(
+            Window(thursdayNight, inFirst = false, disableWifi = true),
+            ScheduleResolver.window(schedules, friday(7)),
+        )
+        assertEquals(
+            Window(thursdayNight, inFirst = false, disableWifi = true),
+            ScheduleResolver.window(schedules, friday(8, 59)),
+        )
         // At the far end, Wi-Fi follows the last window.
         assertNull(ScheduleResolver.window(schedules, friday(9)))
         assertEquals(Ended(thursdayNight, enableWifi = true), ScheduleResolver.lastEnded(schedules, friday(9)))
@@ -189,7 +198,10 @@ class ScheduleResolverTest {
         val lunch = Schedule(id = 2, start = at(12), end = at(13))
         val now = friday(10).atZone(zone)
         assertEquals(friday(12).atZone(zone), ScheduleResolver.nextStart(listOf(night, lunch), now))
-        assertEquals(friday(23).atZone(zone), ScheduleResolver.nextStart(listOf(night, lunch.copy(enabled = false)), now))
+        assertEquals(
+            friday(23).atZone(zone),
+            ScheduleResolver.nextStart(listOf(night, lunch.copy(enabled = false)), now),
+        )
     }
 
     @Test
@@ -261,7 +273,10 @@ class ScheduleResolverTest {
         // A date whose window hasn't ended stays; one that's over moves on.
         val tomorrow = once.copy(date = today.plusDays(1))
         assertEquals(tomorrow, ScheduleResolver.dated(tomorrow, friday(12)))
-        assertEquals(today.plusDays(1), ScheduleResolver.dated(once.copy(date = today.minusDays(3)), friday(23, 30).plusDays(1)).date)
+        assertEquals(
+            today.plusDays(1),
+            ScheduleResolver.dated(once.copy(date = today.minusDays(3)), friday(23, 30).plusDays(1)).date,
+        )
         assertNull(ScheduleResolver.dated(night.copy(date = today), friday(12)).date)
     }
 
@@ -271,7 +286,10 @@ class ScheduleResolverTest {
         assertFalse(ScheduleResolver.hasEnded(once, friday(6).plusDays(1)))
         assertTrue(ScheduleResolver.hasEnded(once, friday(7).plusDays(1)))
         assertEquals(listOf(once), ScheduleResolver.expire(listOf(once), friday(6).plusDays(1)))
-        assertEquals(listOf(once.copy(enabled = false), night), ScheduleResolver.expire(listOf(once, night), friday(7).plusDays(1)))
+        assertEquals(
+            listOf(once.copy(enabled = false), night),
+            ScheduleResolver.expire(listOf(once, night), friday(7).plusDays(1)),
+        )
     }
 
     @Test

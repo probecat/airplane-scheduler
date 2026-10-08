@@ -11,6 +11,7 @@ import dev.probecat.airplanescheduler.system.App
 import dev.probecat.airplanescheduler.system.ScheduleUpdater
 import dev.probecat.airplanescheduler.system.ShizukuState
 import dev.probecat.airplanescheduler.system.ShizukuStatus
+import java.time.LocalDateTime
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
 
 class AppViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application as App
@@ -53,7 +53,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun requestShizuku(): Boolean = ShizukuStatus.request()
 
-    fun newSchedule(): Schedule = Schedule(id = app.schedules.nextId(), start = 23 * 60, end = 7 * 60, days = emptySet())
+    fun newSchedule(): Schedule =
+        Schedule(id = app.schedules.nextId(), start = 23 * 60, end = 7 * 60, days = emptySet())
 
     fun isNew(schedule: Schedule): Boolean = app.schedules.get(schedule.id) == null
 
@@ -73,7 +74,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val schedule = ScheduleResolver.dated(edited, LocalDateTime.now())
         conflict(schedule)?.let { return it }
         val all = app.schedules.all
-        commit(if (all.any { it.id == schedule.id }) all.map { if (it.id == schedule.id) schedule else it } else all + schedule)
+        val replaced = all.map { if (it.id == schedule.id) schedule else it }
+        commit(if (all.any { it.id == schedule.id }) replaced else all + schedule)
         return null
     }
 

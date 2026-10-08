@@ -96,10 +96,12 @@ private fun details(
         appendLine("Notifications: " + if (notificationsAllowed(context)) "allowed" else "not allowed")
         appendLine("Theme: ${settings.theme.label}, dynamic color ${if (settings.dynamicColor) "on" else "off"}")
         appendLine(
-            "Shizuku reminder: " + if (settings.remindShizuku) reminder?.let { "next ${moment.format(it)}" } ?: "on" else "off",
+            "Shizuku reminder: " +
+                if (settings.remindShizuku) reminder?.let { "next ${moment.format(it)}" } ?: "on" else "off",
         )
         appendLine(
-            "Started window: " + (started?.let { "${moment.format(it.window)}, changed ${changed(it.changes)}" } ?: "none"),
+            "Started window: " +
+                (started?.let { "${moment.format(it.window)}, changed ${changed(it.changes)}" } ?: "none"),
         )
         appendLine("Active now: ${active?.let { "#${it.id}" } ?: "none"}")
         appendLine()

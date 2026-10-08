@@ -6,10 +6,7 @@ import android.content.Context
 object V1Migration {
     private const val PREFS = "schedule"
 
-    data class Result(
-        val schedules: List<Schedule>,
-        val remindShizuku: Boolean,
-    )
+    data class Result(val schedules: List<Schedule>, val remindShizuku: Boolean)
 
     fun migrate(v1: Map<String, *>): Result {
         fun flag(key: String, default: Boolean) = v1[key] as? Boolean ?: default

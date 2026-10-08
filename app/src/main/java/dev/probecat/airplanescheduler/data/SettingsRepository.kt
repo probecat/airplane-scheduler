@@ -4,10 +4,10 @@ import android.content.Context
 import androidx.core.content.edit
 import dev.probecat.airplanescheduler.core.Boundary
 import dev.probecat.airplanescheduler.core.ConnectivityPlan.Changes
+import java.time.LocalDateTime
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.time.LocalDateTime
 
 data class Settings(
     val theme: ThemeMode = ThemeMode.SYSTEM,

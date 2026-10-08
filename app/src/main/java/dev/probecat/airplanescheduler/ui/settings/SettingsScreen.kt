@@ -57,11 +57,12 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
     var reminderDenied by rememberSaveable { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { notifications = notificationsAllowed(context) }
     // The reminder is useless without notifications, so a denial turns it back off.
-    val requestNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        notifications = notificationsAllowed(context)
-        reminderDenied = !granted
-        viewModel.updateSettings { it.copy(remindShizuku = granted) }
-    }
+    val requestNotifications =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            notifications = notificationsAllowed(context)
+            reminderDenied = !granted
+            viewModel.updateSettings { it.copy(remindShizuku = granted) }
+        }
 
     Subpage("Settings", onBack) {
         SectionHeader("Appearance")

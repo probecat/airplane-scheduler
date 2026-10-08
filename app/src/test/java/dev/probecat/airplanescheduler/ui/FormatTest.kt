@@ -1,8 +1,6 @@
 package dev.probecat.airplanescheduler.ui
 
 import dev.probecat.airplanescheduler.data.Schedule
-import org.junit.Assert.assertEquals
-import org.junit.Test
 import java.time.DayOfWeek.FRIDAY
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.SATURDAY
@@ -12,6 +10,8 @@ import java.time.DayOfWeek.TUESDAY
 import java.time.DayOfWeek.WEDNESDAY
 import java.time.LocalDate
 import java.util.Locale
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
 class FormatTest {
     private val us = Format(is24Hour = false, Locale.US)

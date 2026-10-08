@@ -82,10 +82,10 @@ import dev.probecat.airplanescheduler.ui.ErrorText
 import dev.probecat.airplanescheduler.ui.Format
 import dev.probecat.airplanescheduler.ui.SwitchRow
 import dev.probecat.airplanescheduler.ui.rememberFormat
-import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import java.time.DayOfWeek
 import java.time.LocalDateTime
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 val ScheduleSaver: Saver<Schedule?, String> = Saver(
     save = { schedule -> schedule?.let { Json.encodeToString(it) } },
@@ -146,10 +146,12 @@ fun ScheduleSheet(
                 when {
                     sameTimes -> ErrorText("Start and end can't be the same time.")
                     conflict != null -> ErrorText(
-                        "Overlaps ${format.label(conflict, now.toLocalDate())}. Change the times or days, or switch that schedule off.",
+                        "Overlaps ${format.label(conflict, now.toLocalDate())}. " +
+                            "Change the times or days, or switch that schedule off.",
                     )
                     else -> Text(
-                        "Airplane mode stays on for ${format.duration(ScheduleTime.duration(schedule.start, schedule.end))}.",
+                        "Airplane mode stays on for " +
+                            "${format.duration(ScheduleTime.duration(schedule.start, schedule.end))}.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -159,7 +161,9 @@ fun ScheduleSheet(
             Text(
                 "Repeats",
                 style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp).semantics { heading() },
+                modifier = Modifier
+                    .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp)
+                    .semantics { heading() },
             )
             DayChips(format, schedule.days, Modifier.padding(horizontal = 16.dp)) { day ->
                 draft = schedule.copy(days = if (day in schedule.days) schedule.days - day else schedule.days + day)
@@ -203,7 +207,11 @@ fun ScheduleSheet(
                         ),
                         modifier = Modifier.weight(1f),
                     ) {
-                        Icon(painterResource(R.drawable.ic_delete), contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(
+                            painterResource(R.drawable.ic_delete),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
                         Spacer(Modifier.width(8.dp))
                         Text("Delete")
                     }
@@ -264,22 +272,31 @@ private fun TimeButton(
                 format.time(minute, Format.SMALL),
                 style = MaterialTheme.typography.displaySmall,
                 maxLines = 1,
-                autoSize = TextAutoSize.StepBased(minFontSize = 16.sp, maxFontSize = MaterialTheme.typography.displaySmall.fontSize),
+                autoSize = TextAutoSize.StepBased(
+                    minFontSize = 16.sp,
+                    maxFontSize = MaterialTheme.typography.displaySmall.fontSize,
+                ),
             )
         }
     }
 }
 
 @Composable
-private fun DayChips(format: Format, days: Set<DayOfWeek>, modifier: Modifier = Modifier, onToggle: (DayOfWeek) -> Unit) {
+private fun DayChips(
+    format: Format,
+    days: Set<DayOfWeek>,
+    modifier: Modifier = Modifier,
+    onToggle: (DayOfWeek) -> Unit,
+) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         for (day in format.week) {
             val selected = day in days
+            val colors = MaterialTheme.colorScheme
             Surface(
                 shape = CircleShape,
-                color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                border = if (selected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+                color = if (selected) colors.primary else Color.Transparent,
+                contentColor = if (selected) colors.onPrimary else colors.onSurface,
+                border = if (selected) null else BorderStroke(1.dp, colors.outline),
                 modifier = Modifier
                     .minimumInteractiveComponentSize()
                     .size(40.dp)
@@ -315,7 +332,10 @@ private fun TimeDialog(title: String, minute: Int, is24Hour: Boolean, onDismiss:
         modeToggleButton = {
             TimePickerDialogDefaults.DisplayModeToggle(
                 onDisplayModeChange = {
-                    mode = if (mode == TimePickerDisplayMode.Picker) TimePickerDisplayMode.Input else TimePickerDisplayMode.Picker
+                    mode = when (mode) {
+                        TimePickerDisplayMode.Picker -> TimePickerDisplayMode.Input
+                        else -> TimePickerDisplayMode.Picker
+                    }
                 },
                 displayMode = mode,
             )
@@ -355,10 +375,16 @@ private fun NameRow(name: String, onChange: (String) -> Unit) {
                 onChange(field.text)
             },
             singleLine = true,
-            textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.onSurfaceVariant, textAlign = TextAlign.End),
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = colors.onSurfaceVariant,
+                textAlign = TextAlign.End,
+            ),
             cursorBrush = SolidColor(colors.primary),
             onTextLayout = { textWidth = it.getLineRight(0) - it.getLineLeft(0) },
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Done),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.Sentences,
+                imeAction = ImeAction.Done,
+            ),
             keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
             modifier = Modifier
                 .weight(1f)

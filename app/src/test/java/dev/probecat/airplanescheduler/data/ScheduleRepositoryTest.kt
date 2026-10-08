@@ -1,15 +1,17 @@
 package dev.probecat.airplanescheduler.data
 
+import java.time.DayOfWeek
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.DayOfWeek
-import java.time.LocalDate
 
 class ScheduleRepositoryTest {
     @Test
     fun daysAreStoredByName() {
-        val json = ScheduleRepository.encode(listOf(Schedule(id = 1, start = 0, end = 60, days = setOf(DayOfWeek.MONDAY))))
+        val json = ScheduleRepository.encode(
+            listOf(Schedule(id = 1, start = 0, end = 60, days = setOf(DayOfWeek.MONDAY))),
+        )
         assertTrue(json, json.contains("\"days\":[\"MONDAY\"]"))
     }
 

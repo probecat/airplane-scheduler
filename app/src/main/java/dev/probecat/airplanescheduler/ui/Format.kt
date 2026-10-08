@@ -58,7 +58,8 @@ class Format(val is24Hour: Boolean, val locale: Locale) {
         val ordered = week.filter { it in days }
         if (ordered.isEmpty()) return "Once"
         val run = ordered.size >= 3 && week.indexOf(ordered.last()) - week.indexOf(ordered.first()) == ordered.size - 1
-        return if (run) "${short(ordered.first())}–${short(ordered.last())}" else ordered.joinToString(" ", transform = ::short)
+        if (run) return "${short(ordered.first())}–${short(ordered.last())}"
+        return ordered.joinToString(" ", transform = ::short)
     }
 
     // "Once, today" for a schedule that runs once, otherwise its days.

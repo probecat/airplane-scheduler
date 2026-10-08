@@ -13,9 +13,9 @@ import dev.probecat.airplanescheduler.IAirplaneService
 import dev.probecat.airplanescheduler.core.Boundary
 import dev.probecat.airplanescheduler.core.ConnectivityPlan
 import dev.probecat.airplanescheduler.core.ConnectivityPlan.Changes
-import rikka.shizuku.Shizuku
 import java.time.LocalDateTime
 import java.util.concurrent.atomic.AtomicBoolean
+import rikka.shizuku.Shizuku
 
 object AirplaneController {
     // Runs the start or end that the alarm fired for.

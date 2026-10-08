@@ -1,12 +1,14 @@
 [tools]
 java = "temurin-17"
 android-sdk = "23.0"
+ktlint = "1.8.0"
 
 [tasks.setup]
-description = "Accept SDK licenses and install SDK packages (build-tools are fetched by Gradle)"
+description = "Accept SDK licenses, install SDK packages (build-tools are fetched by Gradle), and add a ktlint pre-commit hook"
 run = [
   "yes | sdkmanager --licenses > /dev/null",
   "sdkmanager 'platform-tools' 'platforms;android-37.0'",
+  "mise generate git-pre-commit --write --task=ktlint",
 ]
 
 [tasks.test]
@@ -17,13 +19,21 @@ run = "./gradlew testDebugUnitTest"
 description = "Run Android Lint"
 run = "./gradlew lintDebug"
 
+[tasks.ktlint]
+description = "Check Kotlin style with ktlint"
+run = "ktlint"
+
+[tasks.format]
+description = "Fix Kotlin style with ktlint"
+run = "ktlint --format"
+
 [tasks.build]
 description = "Build the debug APK"
 run = "./gradlew assembleDebug"
 
 [tasks.check]
-description = "Test, lint, and build, as CI does"
-run = "./gradlew testDebugUnitTest lintDebug assembleDebug"
+description = "Check style, test, lint, and build, as CI does"
+run = ["ktlint", "./gradlew testDebugUnitTest lintDebug assembleDebug"]
 
 [tasks.run]
 description = "Install the debug build on the USB device and launch it"

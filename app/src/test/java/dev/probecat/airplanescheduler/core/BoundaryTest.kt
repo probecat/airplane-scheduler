@@ -5,9 +5,9 @@ import dev.probecat.airplanescheduler.core.Boundary.Step
 import dev.probecat.airplanescheduler.core.ConnectivityPlan.Changes
 import dev.probecat.airplanescheduler.core.ScheduleResolver.Window
 import dev.probecat.airplanescheduler.data.Schedule
+import java.time.LocalDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.time.LocalDateTime
 
 class BoundaryTest {
     private fun at(hour: Int, minute: Int = 0) = hour * 60 + minute
@@ -104,7 +104,12 @@ class BoundaryTest {
     fun deletingTheRunningWindowUsesItsLastWifiOption() {
         assertEquals(
             Step.End(Changes(airplane = true, wifi = false)),
-            Boundary.atEdit(listOf(night.copy(enableWifi = false)), emptyList(), friday(23, 30), Started(friday(23), both)),
+            Boundary.atEdit(
+                listOf(night.copy(enableWifi = false)),
+                emptyList(),
+                friday(23, 30),
+                Started(friday(23), both),
+            ),
         )
     }
 
@@ -120,7 +125,12 @@ class BoundaryTest {
     fun editingTheTimesOfTheRunningWindowMovesItsStart() {
         assertEquals(
             Step.Move(Started(friday(22), both)),
-            Boundary.atEdit(listOf(night), listOf(night.copy(start = at(22))), friday(23, 30), Started(friday(23), both)),
+            Boundary.atEdit(
+                listOf(night),
+                listOf(night.copy(start = at(22))),
+                friday(23, 30),
+                Started(friday(23), both),
+            ),
         )
     }
 
@@ -135,9 +145,15 @@ class BoundaryTest {
     @Test
     fun editsThatLeaveTheWindowAloneChangeNothing() {
         val lunch = Schedule(id = 3, start = at(12), end = at(13))
-        assertEquals(Step.None, Boundary.atEdit(listOf(night), listOf(night, lunch), friday(23, 30), Started(friday(23), both)))
+        assertEquals(
+            Step.None,
+            Boundary.atEdit(listOf(night), listOf(night, lunch), friday(23, 30), Started(friday(23), both)),
+        )
         assertEquals(Step.None, Boundary.atEdit(listOf(night), listOf(night, lunch), friday(14), started = null))
         // An edit doesn't catch up a missed start.
-        assertEquals(Step.None, Boundary.atEdit(listOf(night), listOf(night.copy(start = at(22))), friday(23, 30), null))
+        assertEquals(
+            Step.None,
+            Boundary.atEdit(listOf(night), listOf(night.copy(start = at(22))), friday(23, 30), null),
+        )
     }
 }

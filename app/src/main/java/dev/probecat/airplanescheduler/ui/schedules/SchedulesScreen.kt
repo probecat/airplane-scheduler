@@ -16,10 +16,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -28,9 +28,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -72,8 +72,8 @@ import dev.probecat.airplanescheduler.ui.ContentWidth
 import dev.probecat.airplanescheduler.ui.DismissibleSnackbarHost
 import dev.probecat.airplanescheduler.ui.Format
 import dev.probecat.airplanescheduler.ui.rememberFormat
-import kotlinx.coroutines.launch
 import java.time.LocalDate
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,7 +92,9 @@ fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () 
     fun showConflict(conflict: Schedule) {
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
-            snackbar.showSnackbar("Overlaps ${format.label(conflict, now.toLocalDate())}. Switch that one off or change the times first.")
+            snackbar.showSnackbar(
+                "Overlaps ${format.label(conflict, now.toLocalDate())}. Switch that one off or change the times first.",
+            )
         }
     }
 
@@ -178,7 +180,14 @@ fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () 
     }
 
     explaining?.let { state ->
-        ShizukuDialog(state, onHelp = { explaining = null; onHelp() }, onDismiss = { explaining = null })
+        ShizukuDialog(
+            state,
+            onHelp = {
+                explaining = null
+                onHelp()
+            },
+            onDismiss = { explaining = null },
+        )
     }
 }
 
@@ -254,11 +263,13 @@ private fun ShizukuDialog(state: ShizukuState, onHelp: () -> Unit, onDismiss: ()
     val shizuku = context.packageManager.getLaunchIntentForPackage(ShizukuStatus.SHIZUKU_PACKAGE)
     val (title, text) = when (state) {
         ShizukuState.READY -> return
-        ShizukuState.OFFLINE -> "Shizuku isn't running" to
-            "Airplane Scheduler switches airplane mode through Shizuku. Shizuku stops when the phone restarts, " +
-            "so start it again in the Shizuku app. Until then, schedules can't switch anything."
-        ShizukuState.PERMISSION_NEEDED -> "Allow access in Shizuku" to
-            "Shizuku won't ask again. Open Shizuku, find Airplane Scheduler under authorized apps, and allow it."
+        ShizukuState.OFFLINE ->
+            "Shizuku isn't running" to
+                "Airplane Scheduler switches airplane mode through Shizuku. Shizuku stops when the phone restarts, " +
+                "so start it again in the Shizuku app. Until then, schedules can't switch anything."
+        ShizukuState.PERMISSION_NEEDED ->
+            "Allow access in Shizuku" to
+                "Shizuku won't ask again. Open Shizuku, find Airplane Scheduler under authorized apps, and allow it."
     }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -311,7 +322,9 @@ private fun ScheduleCard(
     val container by animateColorAsState(if (schedule.enabled) colors.primaryContainer else colors.surfaceContainer)
     val content = if (schedule.enabled) colors.onPrimaryContainer else colors.onSurfaceVariant
     // An em space between days and name.
-    val summary = listOf(format.repeats(schedule, today), schedule.name).filter { it.isNotBlank() }.joinToString("\u2003")
+    val summary = listOf(format.repeats(schedule, today), schedule.name)
+        .filter { it.isNotBlank() }
+        .joinToString("\u2003")
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
@@ -364,7 +377,11 @@ private fun ActiveBadge() {
             modifier = Modifier.padding(start = 6.dp, end = 8.dp, top = 2.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(painterResource(R.drawable.ic_airplanemode_active), contentDescription = null, modifier = Modifier.size(14.dp))
+            Icon(
+                painterResource(R.drawable.ic_airplanemode_active),
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+            )
             Spacer(Modifier.width(4.dp))
             Text("Active now", style = MaterialTheme.typography.labelMedium)
         }

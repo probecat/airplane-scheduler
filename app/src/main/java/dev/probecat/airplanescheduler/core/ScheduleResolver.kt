@@ -134,7 +134,11 @@ object ScheduleResolver {
     }
 
     // Walks back through windows that end exactly where the current one starts.
-    private fun firstOfChain(active: Schedule, live: List<Schedule>, now: LocalDateTime): Pair<Schedule, LocalDateTime>? {
+    private fun firstOfChain(
+        active: Schedule,
+        live: List<Schedule>,
+        now: LocalDateTime,
+    ): Pair<Schedule, LocalDateTime>? {
         var current = active
         var start = windowStart(active, now) ?: return null
         val seen = mutableSetOf(active.id)

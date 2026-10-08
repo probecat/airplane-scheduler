@@ -15,10 +15,22 @@ class ConnectivityPlanTest {
 
     @Test
     fun startChangesOnlyWhatIsNotAlreadyInPlace() {
-        assertEquals(Changes(airplane = true, wifi = true), ConnectivityPlan.start(false, wifiOn = true, disableWifi = true))
-        assertEquals(Changes(airplane = false, wifi = true), ConnectivityPlan.start(true, wifiOn = true, disableWifi = true))
-        assertEquals(Changes(airplane = true, wifi = false), ConnectivityPlan.start(false, wifiOn = false, disableWifi = true))
-        assertEquals(Changes(airplane = true, wifi = false), ConnectivityPlan.start(false, wifiOn = true, disableWifi = false))
+        assertEquals(
+            Changes(airplane = true, wifi = true),
+            ConnectivityPlan.start(false, wifiOn = true, disableWifi = true),
+        )
+        assertEquals(
+            Changes(airplane = false, wifi = true),
+            ConnectivityPlan.start(true, wifiOn = true, disableWifi = true),
+        )
+        assertEquals(
+            Changes(airplane = true, wifi = false),
+            ConnectivityPlan.start(false, wifiOn = false, disableWifi = true),
+        )
+        assertEquals(
+            Changes(airplane = true, wifi = false),
+            ConnectivityPlan.start(false, wifiOn = true, disableWifi = false),
+        )
         assertTrue(ConnectivityPlan.start(true, wifiOn = false, disableWifi = true).isEmpty)
     }
 
@@ -48,7 +60,10 @@ class ConnectivityPlanTest {
 
     @Test
     fun onlyTheChangesRun() {
-        assertEquals(listOf(AIRPLANE to airplaneOn), ConnectivityPlan.commands(true, Changes(airplane = true, wifi = false)))
+        assertEquals(
+            listOf(AIRPLANE to airplaneOn),
+            ConnectivityPlan.commands(true, Changes(airplane = true, wifi = false)),
+        )
         assertEquals(listOf(WIFI to wifiOn), ConnectivityPlan.commands(false, Changes(airplane = false, wifi = true)))
         assertTrue(ConnectivityPlan.commands(true, Changes.NONE).isEmpty())
     }
