@@ -412,7 +412,7 @@ private fun ScheduleCard(
     }
 }
 
-private val TIME_SIZE = 40.sp
+private val TIME_SIZE = 36.sp
 
 @Composable
 private fun ActiveBadge() {
