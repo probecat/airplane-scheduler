@@ -125,7 +125,7 @@ fun ScheduleSheet(
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 16.dp)) {
             Text(
-                if (isNew) "New schedule" else schedule.name.ifBlank { "Edit schedule" },
+                if (isNew) "New schedule" else "Edit schedule",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 24.dp).semantics { heading() },
             )
