@@ -13,6 +13,7 @@ data class Settings(
     val theme: ThemeMode = ThemeMode.SYSTEM,
     val dynamicColor: Boolean = true,
     val remindShizuku: Boolean = false,
+    val hideShizukuReady: Boolean = false,
 )
 
 class SettingsRepository(context: Context) {
@@ -30,6 +31,7 @@ class SettingsRepository(context: Context) {
             putString("theme", settings.theme.name)
             putBoolean("dynamicColor", settings.dynamicColor)
             putBoolean("remindShizuku", settings.remindShizuku)
+            putBoolean("hideShizukuReady", settings.hideShizukuReady)
         }
     }
 
@@ -64,6 +66,7 @@ class SettingsRepository(context: Context) {
             ?.let { name -> ThemeMode.entries.find { it.name == name } } ?: ThemeMode.SYSTEM,
         dynamicColor = prefs.getBoolean("dynamicColor", true),
         remindShizuku = prefs.getBoolean("remindShizuku", false),
+        hideShizukuReady = prefs.getBoolean("hideShizukuReady", false),
     )
 
     private companion object {

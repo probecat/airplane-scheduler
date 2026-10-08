@@ -21,9 +21,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -32,6 +29,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -47,7 +45,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,9 +54,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
@@ -72,11 +67,11 @@ import dev.probecat.airplanescheduler.R
 import dev.probecat.airplanescheduler.core.ScheduleResolver
 import dev.probecat.airplanescheduler.data.Schedule
 import dev.probecat.airplanescheduler.system.ShizukuState
-import dev.probecat.airplanescheduler.system.ShizukuStatus
 import dev.probecat.airplanescheduler.ui.AppViewModel
 import dev.probecat.airplanescheduler.ui.ContentWidth
 import dev.probecat.airplanescheduler.ui.DismissibleSnackbarHost
 import dev.probecat.airplanescheduler.ui.Format
+import dev.probecat.airplanescheduler.ui.ShizukuDialog
 import dev.probecat.airplanescheduler.ui.rememberFormat
 import java.time.LocalDate
 import kotlin.math.abs
@@ -87,6 +82,7 @@ import kotlinx.coroutines.launch
 fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () -> Unit, onDebug: () -> Unit) {
     val schedules by viewModel.schedules.collectAsStateWithLifecycle()
     val shizuku by viewModel.shizuku.collectAsStateWithLifecycle()
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
     val now by viewModel.now.collectAsStateWithLifecycle()
     val format = rememberFormat()
     val scope = rememberCoroutineScope()
@@ -149,11 +145,18 @@ fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () 
                 ),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                item(key = "status") {
-                    ShizukuChip(shizuku) {
-                        if (shizuku != ShizukuState.PERMISSION_NEEDED || !viewModel.requestShizuku()) {
-                            explaining = shizuku
-                        }
+                if (shizuku != ShizukuState.READY || !settings.hideShizukuReady) {
+                    item(key = "status") {
+                        ShizukuStrip(
+                            state = shizuku,
+                            onClick = {
+                                if (shizuku != ShizukuState.PERMISSION_NEEDED || !viewModel.requestShizuku()) {
+                                    explaining = shizuku
+                                }
+                            },
+                            onDismiss = { viewModel.updateSettings { it.copy(hideShizukuReady = true) } },
+                            modifier = Modifier.animateItem(),
+                        )
                     }
                 }
                 if (schedules.isEmpty()) {
@@ -227,76 +230,45 @@ private fun OverflowMenu(onSettings: () -> Unit, onHelp: () -> Unit, onDebug: ()
     }
 }
 
-// A tappable chip when Shizuku needs attention; when it's ready, the same look as a plain badge.
 @Composable
-private fun ShizukuChip(state: ShizukuState, onClick: () -> Unit) {
+private fun ShizukuStrip(
+    state: ShizukuState,
+    onClick: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = MaterialTheme.colorScheme
+    val ready = state == ShizukuState.READY
     val (label, icon) = when (state) {
         ShizukuState.READY -> "Shizuku ready" to R.drawable.ic_check_circle
         ShizukuState.OFFLINE -> "Shizuku offline" to R.drawable.ic_error
         ShizukuState.PERMISSION_NEEDED -> "Allow Shizuku access" to R.drawable.ic_lock
     }
-    val leadingIcon = @Composable {
-        Icon(
-            painterResource(icon),
-            contentDescription = null,
-            tint = if (state == ShizukuState.READY) colors.primary else colors.error,
-            modifier = Modifier.size(AssistChipDefaults.IconSize),
-        )
-    }
-    if (state == ShizukuState.READY) {
-        // The chip reserves a 48 dp touch target around its 32 dp body, so the badge does too, and
-        // nothing below moves when the state changes.
-        Surface(
-            modifier = Modifier.minimumInteractiveComponentSize(),
-            shape = AssistChipDefaults.shape,
-            border = AssistChipDefaults.assistChipBorder(enabled = true),
-            color = Color.Transparent,
+    Surface(
+        onClick = onClick,
+        enabled = !ready,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = if (ready) colors.surfaceContainer else colors.errorContainer,
+        contentColor = if (ready) colors.onSurface else colors.onErrorContainer,
+    ) {
+        Row(
+            modifier = Modifier.heightIn(min = 48.dp).padding(start = 16.dp, end = if (ready) 8.dp else 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.height(AssistChipDefaults.Height).padding(start = 8.dp, end = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                leadingIcon()
-                Spacer(Modifier.width(8.dp))
-                Text(label, style = MaterialTheme.typography.labelLarge, color = colors.onSurface)
+            Icon(
+                painterResource(icon),
+                contentDescription = null,
+                tint = if (ready) colors.primary else LocalContentColor.current,
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+            if (ready) {
+                TextButton(onClick = onDismiss, contentPadding = PaddingValues(horizontal = 12.dp)) { Text("Dismiss") }
             }
         }
-    } else {
-        AssistChip(onClick = onClick, label = { Text(label) }, leadingIcon = leadingIcon)
     }
-}
-
-@Composable
-private fun ShizukuDialog(state: ShizukuState, onHelp: () -> Unit, onDismiss: () -> Unit) {
-    val context = LocalContext.current
-    val shizuku = context.packageManager.getLaunchIntentForPackage(ShizukuStatus.SHIZUKU_PACKAGE)
-    val (title, text) = when (state) {
-        ShizukuState.READY -> return
-        ShizukuState.OFFLINE ->
-            "Shizuku isn't running" to
-                "Airplane Scheduler switches airplane mode through Shizuku. Shizuku stops when the phone restarts, " +
-                "so start it again in the Shizuku app. Until then, schedules can't switch anything."
-        ShizukuState.PERMISSION_NEEDED ->
-            "Allow access in Shizuku" to
-                "Shizuku won't ask again. Open Shizuku, find Airplane Scheduler under authorized apps, and allow it."
-    }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = { Text(text) },
-        confirmButton = {
-            if (shizuku != null) {
-                TextButton(onClick = {
-                    onDismiss()
-                    context.startActivity(shizuku)
-                }) { Text("Open Shizuku") }
-            } else {
-                TextButton(onClick = onDismiss) { Text("OK") }
-            }
-        },
-        dismissButton = { TextButton(onClick = onHelp) { Text("Help") } },
-    )
 }
 
 @Composable
