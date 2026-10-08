@@ -19,7 +19,7 @@ private fun sections(format: Format) = listOf(
         "turn it on again.",
     "Wi-Fi" to
         "“Turn off Wi-Fi at start” turns off Wi-Fi before airplane mode turns on. If Wi-Fi is already off, " +
-        "the app does not change it. “Turn Wi-Fi back on at end” turns on Wi-Fi when the schedule ends, but " +
+        "the app does not change it. “Turn on Wi-Fi at end” turns on Wi-Fi when the schedule ends, but " +
         "only if the app turned it off at the start.",
     "What Shizuku is" to
         "Shizuku is an app that lets other apps run system commands without root. Android does not let " +
@@ -37,7 +37,7 @@ private fun sections(format: Format) = listOf(
         "${format.time(23 * 60)} to ${format.time(7 * 60)} ends on Saturday morning. Two schedules that are " +
         "switched on cannot overlap. If one schedule ends at the same time that another starts, they work as " +
         "one schedule. Airplane mode stays on between them. Wi-Fi follows “Turn off Wi-Fi at start” of the " +
-        "first schedule and “Turn Wi-Fi back on at end” of the last schedule.",
+        "first schedule and “Turn on Wi-Fi at end” of the last schedule.",
     "Schedules without days" to
         "A schedule with no days selected runs once, then switches itself off. It runs at the next time " +
         "its times come around, or right away if the current time is already inside them. Switch it on " +

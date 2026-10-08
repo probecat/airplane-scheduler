@@ -187,7 +187,7 @@ fun ScheduleSheet(
             // move the switch above it out from under the finger.
             SwitchRow(
                 icon = R.drawable.ic_wifi,
-                title = "Turn Wi-Fi back on at end",
+                title = "Turn on Wi-Fi at end",
                 checked = schedule.enableWifi,
                 enabled = schedule.disableWifi,
             ) { draft = schedule.copy(enableWifi = it) }
