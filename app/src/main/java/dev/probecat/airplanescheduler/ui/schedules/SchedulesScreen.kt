@@ -140,7 +140,7 @@ fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () 
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
-                    top = padding.calculateTopPadding(),
+                    top = padding.calculateTopPadding() + 8.dp,
                     bottom = padding.calculateBottomPadding() + 112.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -155,7 +155,7 @@ fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () 
                                 }
                             },
                             onDismiss = { viewModel.updateSettings { it.copy(hideShizukuReady = true) } },
-                            modifier = Modifier.animateItem(),
+                            modifier = Modifier.animateItem().padding(bottom = 8.dp),
                         )
                     }
                 }
@@ -240,8 +240,8 @@ private fun ShizukuStrip(
     val colors = MaterialTheme.colorScheme
     val ready = state == ShizukuState.READY
     val (label, icon) = when (state) {
-        ShizukuState.READY -> "Shizuku ready" to R.drawable.ic_check_circle
-        ShizukuState.OFFLINE -> "Shizuku offline" to R.drawable.ic_error
+        ShizukuState.READY -> "Shizuku is ready" to R.drawable.ic_check_circle
+        ShizukuState.OFFLINE -> "Shizuku is offline" to R.drawable.ic_error
         ShizukuState.PERMISSION_NEEDED -> "Allow Shizuku access" to R.drawable.ic_lock
     }
     Surface(
