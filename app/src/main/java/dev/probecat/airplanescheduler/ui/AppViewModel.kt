@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dev.probecat.airplanescheduler.core.ScheduleResolver
 import dev.probecat.airplanescheduler.data.Schedule
 import dev.probecat.airplanescheduler.data.Settings
+import dev.probecat.airplanescheduler.system.AlarmScheduler
 import dev.probecat.airplanescheduler.system.App
 import dev.probecat.airplanescheduler.system.ScheduleUpdater
 import dev.probecat.airplanescheduler.system.ShizukuState
@@ -79,6 +80,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         val id = if (app.schedules.get(schedule.id) == null) schedule.id else app.schedules.nextId()
         val restored = schedule.copy(id = id).let { if (conflict(it) != null) it.copy(enabled = false) else it }
         commit(app.schedules.all + restored)
+    }
+
+    fun updateSettings(transform: (Settings) -> Settings) {
+        val before = app.settings.current
+        app.settings.update(transform)
+        if (before.remindShizuku != app.settings.current.remindShizuku) {
+            AlarmScheduler.scheduleAll(app)
+        }
     }
 
     private fun commit(schedules: List<Schedule>) {

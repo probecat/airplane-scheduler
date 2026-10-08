@@ -7,15 +7,36 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import dev.probecat.airplanescheduler.ui.help.DebugScreen
+import dev.probecat.airplanescheduler.ui.help.HelpScreen
 import dev.probecat.airplanescheduler.ui.schedules.SchedulesScreen
+import dev.probecat.airplanescheduler.ui.settings.SettingsScreen
 import dev.probecat.airplanescheduler.ui.theme.AppTheme
 import dev.probecat.airplanescheduler.ui.theme.isDark
+import kotlinx.serialization.Serializable
+
+@Serializable
+private object SchedulesRoute
+
+@Serializable
+private object SettingsRoute
+
+@Serializable
+private object HelpRoute
+
+@Serializable
+private object DebugRoute
 
 class MainActivity : ComponentActivity() {
     private val viewModel: AppViewModel by viewModels()
@@ -27,7 +48,29 @@ class MainActivity : ComponentActivity() {
             SystemBars(isDark(settings.theme))
             LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshShizuku() }
             AppTheme(settings.theme, settings.dynamicColor) {
-                SchedulesScreen(viewModel)
+                val navController = rememberNavController()
+                NavHost(
+                    navController,
+                    startDestination = SchedulesRoute,
+                    // Pages switch at once, without animation, as in Droid-ify. Back reuses these;
+                    // predictive back has its own defaults.
+                    enterTransition = { EnterTransition.None },
+                    exitTransition = { ExitTransition.None },
+                    predictivePopEnterTransition = { EnterTransition.None },
+                    predictivePopExitTransition = { ExitTransition.None },
+                ) {
+                    composable<SchedulesRoute> {
+                        SchedulesScreen(
+                            viewModel,
+                            onSettings = { navController.navigate(SettingsRoute) },
+                            onHelp = { navController.navigate(HelpRoute) },
+                            onDebug = { navController.navigate(DebugRoute) },
+                        )
+                    }
+                    composable<SettingsRoute> { SettingsScreen(viewModel, onBack = navController::navigateUp) }
+                    composable<HelpRoute> { HelpScreen(onBack = navController::navigateUp) }
+                    composable<DebugRoute> { DebugScreen(viewModel, onBack = navController::navigateUp) }
+                }
             }
         }
     }

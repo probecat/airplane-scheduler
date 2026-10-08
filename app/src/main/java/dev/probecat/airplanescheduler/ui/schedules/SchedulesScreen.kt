@@ -25,8 +25,11 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -73,7 +76,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SchedulesScreen(viewModel: AppViewModel) {
+fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () -> Unit, onDebug: () -> Unit) {
     val schedules by viewModel.schedules.collectAsStateWithLifecycle()
     val shizuku by viewModel.shizuku.collectAsStateWithLifecycle()
     val now by viewModel.now.collectAsStateWithLifecycle()
@@ -97,6 +100,7 @@ fun SchedulesScreen(viewModel: AppViewModel) {
         topBar = {
             TopAppBar(
                 title = { Text("Airplane Scheduler") },
+                actions = { OverflowMenu(onSettings, onHelp, onDebug) },
                 scrollBehavior = scrollBehavior,
             )
         },
@@ -171,7 +175,33 @@ fun SchedulesScreen(viewModel: AppViewModel) {
     }
 
     explaining?.let { state ->
-        ShizukuDialog(state, onDismiss = { explaining = null })
+        ShizukuDialog(state, onHelp = { explaining = null; onHelp() }, onDismiss = { explaining = null })
+    }
+}
+
+@Composable
+private fun OverflowMenu(onSettings: () -> Unit, onHelp: () -> Unit, onDebug: () -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }) {
+            Icon(painterResource(R.drawable.ic_more_vert), contentDescription = "More options")
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            listOf(
+                Triple("Settings", R.drawable.ic_settings, onSettings),
+                Triple("Help", R.drawable.ic_help, onHelp),
+                Triple("Debug info", R.drawable.ic_bug_report, onDebug),
+            ).forEach { (label, icon, action) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    leadingIcon = { Icon(painterResource(icon), contentDescription = null) },
+                    onClick = {
+                        open = false
+                        action()
+                    },
+                )
+            }
+        }
     }
 }
 
@@ -216,7 +246,7 @@ private fun ShizukuChip(state: ShizukuState, onClick: () -> Unit) {
 }
 
 @Composable
-private fun ShizukuDialog(state: ShizukuState, onDismiss: () -> Unit) {
+private fun ShizukuDialog(state: ShizukuState, onHelp: () -> Unit, onDismiss: () -> Unit) {
     val context = LocalContext.current
     val shizuku = context.packageManager.getLaunchIntentForPackage(ShizukuStatus.SHIZUKU_PACKAGE)
     val (title, text) = when (state) {
@@ -241,6 +271,7 @@ private fun ShizukuDialog(state: ShizukuState, onDismiss: () -> Unit) {
                 TextButton(onClick = onDismiss) { Text("OK") }
             }
         },
+        dismissButton = { TextButton(onClick = onHelp) { Text("Help") } },
     )
 }
 
