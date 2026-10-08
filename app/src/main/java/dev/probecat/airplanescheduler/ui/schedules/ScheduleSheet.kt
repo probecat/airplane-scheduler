@@ -167,9 +167,9 @@ fun ScheduleSheet(
             DayChips(format, schedule.days, Modifier.padding(horizontal = 16.dp)) { day ->
                 draft = schedule.copy(days = if (day in schedule.days) schedule.days - day else schedule.days + day)
             }
-            if (schedule.once) {
+            onceText(schedule, now)?.let {
                 Text(
-                    onceText(schedule, now),
+                    it,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
@@ -239,8 +239,8 @@ fun ScheduleSheet(
 }
 
 // Saving picks the first window that hasn't ended, which may be running already.
-private fun onceText(schedule: Schedule, now: LocalDateTime): String {
-    if (!schedule.enabled) return "Runs once, after you switch it on."
+private fun onceText(schedule: Schedule, now: LocalDateTime): String? {
+    if (!schedule.once || !schedule.enabled) return null
     val date = ScheduleResolver.dated(schedule, now).date!!
     return when {
         !date.atTime(schedule.start / 60, schedule.start % 60).isAfter(now) -> "Runs once, starting now."
