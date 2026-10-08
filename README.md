@@ -15,7 +15,7 @@ Turns airplane mode on and off on a schedule, so your phone goes quiet at night 
 
 ## Requirements
 
-- Android 17 or later.
+- Android 15 or later.
 - [Shizuku](https://shizuku.rikka.app/).
 
 ## Building
