@@ -53,8 +53,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun requestShizuku(): Boolean = ShizukuStatus.request()
 
-    fun newSchedule(): Schedule =
-        Schedule(id = app.schedules.nextId(), start = 23 * 60, end = 7 * 60, days = emptySet())
+    fun newSchedule(): Schedule = Schedule(
+        id = app.schedules.nextId(),
+        start = 23 * 60,
+        end = 7 * 60,
+        days = emptySet(),
+        disableWifi = false,
+        enableWifi = false,
+    )
 
     fun isNew(schedule: Schedule): Boolean = app.schedules.get(schedule.id) == null
 
