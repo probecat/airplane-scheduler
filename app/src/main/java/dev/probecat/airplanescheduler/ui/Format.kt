@@ -39,8 +39,7 @@ class Format(val is24Hour: Boolean, val locale: Locale) {
         return buildAnnotatedString {
             append(clock.format(time))
             if (!is24Hour) {
-                append(NBSP)
-                withStyle(SpanStyle(fontSize = suffixSize)) { append(marker.format(time)) }
+                withStyle(SpanStyle(fontSize = suffixSize)) { append("$NBSP${marker.format(time)}") }
             }
         }
     }
