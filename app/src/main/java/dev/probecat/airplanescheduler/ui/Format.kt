@@ -51,20 +51,26 @@ class Format(val is24Hour: Boolean, val locale: Locale) {
         append(time(schedule.end, suffixSize))
     }
 
-    fun days(days: Set<DayOfWeek>): String = when (days) {
-        Schedule.EVERY_DAY -> "Every day"
-        WEEKDAYS -> "Weekdays"
-        WEEKEND -> "Weekends"
-        emptySet<DayOfWeek>() -> "No days"
-        else -> week.filter { it in days }.joinToString(", ") { it.getDisplayName(TextStyle.SHORT, locale) }
+    // As Clock shows them: a single run of three or more days as a range, otherwise each day.
+    fun days(days: Set<DayOfWeek>): String {
+        if (days == Schedule.EVERY_DAY) return "Every day"
+        val ordered = week.filter { it in days }
+        if (ordered.isEmpty()) return "No days"
+        val run = ordered.size >= 3 && week.indexOf(ordered.last()) - week.indexOf(ordered.first()) == ordered.size - 1
+        return if (run) "${short(ordered.first())}–${short(ordered.last())}" else ordered.joinToString(" ", transform = ::short)
     }
+
+    private fun short(day: DayOfWeek): String = day.getDisplayName(TextStyle.SHORT, locale)
 
     fun dayName(day: DayOfWeek): String = day.getDisplayName(TextStyle.FULL, locale)
 
     fun dayLetter(day: DayOfWeek): String = day.getDisplayName(TextStyle.NARROW, locale)
 
-    fun label(schedule: Schedule): String =
-        if (schedule.name.isBlank()) "${window(schedule)} (${days(schedule.days).lowercase(locale)})" else "“${schedule.name}”"
+    fun label(schedule: Schedule): String {
+        if (schedule.name.isNotBlank()) return "“${schedule.name}”"
+        val days = if (schedule.days == Schedule.EVERY_DAY) "every day" else days(schedule.days)
+        return "${window(schedule)} ($days)"
+    }
 
     fun duration(minutes: Int): String {
         val hours = minutes / 60
@@ -81,10 +87,6 @@ class Format(val is24Hour: Boolean, val locale: Locale) {
 
         // Keeps "11:00 PM" and "8 h" on one line.
         private const val NBSP = '\u00A0'
-        private val WEEKDAYS = setOf(
-            DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY,
-        )
-        private val WEEKEND = setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
     }
 }
 
