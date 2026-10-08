@@ -320,7 +320,8 @@ private fun EmptyState(modifier: Modifier = Modifier) {
 
 @Composable
 private fun SwipeToDelete(onDelete: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    // Not saveable: ids are reused, and a saved dismissed state would delete the next schedule with the same id.
+    // Not saveable: undo and app restarts can reuse an id, and a saved dismissed state would delete the
+    // next schedule with it.
     val threshold = SwipeToDismissBoxDefaults.positionalThreshold
     val state = remember { SwipeToDismissBoxState(SwipeToDismissBoxValue.Settled, threshold) }
     SwipeToDismissBox(

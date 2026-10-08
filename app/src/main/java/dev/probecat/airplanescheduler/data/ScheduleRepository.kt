@@ -19,9 +19,13 @@ class ScheduleRepository(context: Context) {
 
     fun get(id: Long): Schedule? = all.find { it.id == id }
 
-    fun nextId(): Long = (all.maxOfOrNull { it.id } ?: 0) + 1
+    // Not lowered by deletes, so ids aren't reused while the app runs.
+    private var highestId = all.maxOfOrNull { it.id } ?: 0
+
+    fun nextId(): Long = highestId + 1
 
     fun replaceAll(schedules: List<Schedule>) {
+        highestId = maxOf(highestId, schedules.maxOfOrNull { it.id } ?: 0)
         state.value = schedules
         prefs.edit { putString(KEY, encode(schedules)) }
     }
