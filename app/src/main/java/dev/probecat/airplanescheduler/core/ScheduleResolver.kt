@@ -1,12 +1,13 @@
 package dev.probecat.airplanescheduler.core
 
 import dev.probecat.airplanescheduler.data.Schedule
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
 
-// Wall-clock answers across all schedules. A window starts on one of its days and,
-// when the end is at or before the start, ends the next day.
+// Wall-clock answers across all schedules. A window starts on one of its days, or on its date when
+// it runs once, and, when the end is at or before the start, ends the next day.
 object ScheduleResolver {
     private const val WEEK = 7 * ScheduleTime.DAY
 
@@ -17,7 +18,23 @@ object ScheduleResolver {
     // The chain that ended most recently: where it began, and its last window's Wi-Fi option.
     data class Ended(val window: LocalDateTime, val enableWifi: Boolean)
 
-    fun isValid(schedule: Schedule): Boolean = schedule.start != schedule.end && schedule.days.isNotEmpty()
+    fun isValid(schedule: Schedule): Boolean =
+        schedule.start != schedule.end && (!schedule.once || schedule.date != null)
+
+    // A schedule that runs once keeps its date until that window ends. Otherwise it takes the first
+    // window that hasn't ended, which may be running already.
+    fun dated(schedule: Schedule, now: LocalDateTime): Schedule {
+        if (!schedule.once) return schedule.copy(date = null)
+        if (schedule.date != null && windowEnd(schedule, schedule.date).isAfter(now)) return schedule
+        val date = (-1L..1L).map { now.toLocalDate().plusDays(it) }.first { windowEnd(schedule, it).isAfter(now) }
+        return schedule.copy(date = date)
+    }
+
+    fun hasEnded(schedule: Schedule, now: LocalDateTime): Boolean =
+        schedule.once && schedule.date != null && !windowEnd(schedule, schedule.date).isAfter(now)
+
+    fun expire(schedules: List<Schedule>, now: LocalDateTime): List<Schedule> =
+        schedules.map { if (it.enabled && hasEnded(it, now)) it.copy(enabled = false) else it }
 
     fun isActive(schedule: Schedule, now: LocalDateTime): Boolean = windowStart(schedule, now) != null
 
@@ -48,9 +65,15 @@ object ScheduleResolver {
     fun overlaps(a: Schedule, b: Schedule): Boolean {
         val aLength = ScheduleTime.duration(a.start, a.end)
         val bLength = ScheduleTime.duration(b.start, b.end)
-        return a.days.any { aDay ->
+        if (a.once && b.once) {
+            val aStart = a.date!!.toEpochDay() * ScheduleTime.DAY + a.start
+            val bStart = b.date!!.toEpochDay() * ScheduleTime.DAY + b.start
+            return bStart - aStart in 0L until aLength || aStart - bStart in 0L until bLength
+        }
+        // A window that runs once overlaps a weekly one when its weekday's window would.
+        return weekdays(a).any { aDay ->
             val aStart = aDay.ordinal * ScheduleTime.DAY + a.start
-            b.days.any { bDay ->
+            weekdays(b).any { bDay ->
                 val bStart = bDay.ordinal * ScheduleTime.DAY + b.start
                 // Half-open windows on a circular week, so touching ends don't overlap.
                 Math.floorMod(bStart - aStart, WEEK) < aLength || Math.floorMod(aStart - bStart, WEEK) < bLength
@@ -62,7 +85,7 @@ object ScheduleResolver {
         if (!isValid(schedule)) return null
         return (0L..7L).firstNotNullOfOrNull { offset ->
             val trigger = ScheduleTime.at(now.plusDays(offset), schedule.start)
-            trigger.takeIf { it.isAfter(now) && now.toLocalDate().plusDays(offset).dayOfWeek in schedule.days }
+            trigger.takeIf { it.isAfter(now) && startsOn(schedule, now.toLocalDate().plusDays(offset)) }
         }
     }
 
@@ -71,7 +94,7 @@ object ScheduleResolver {
         return (0L..8L).firstNotNullOfOrNull { offset ->
             val trigger = ScheduleTime.at(now.plusDays(offset), schedule.end)
             val started = startDate(schedule, now.toLocalDate().plusDays(offset))
-            trigger.takeIf { it.isAfter(now) && started.dayOfWeek in schedule.days }
+            trigger.takeIf { it.isAfter(now) && startsOn(schedule, started) }
         }
     }
 
@@ -88,6 +111,16 @@ object ScheduleResolver {
 
     private fun live(schedules: List<Schedule>) = schedules.filter { it.enabled && isValid(it) }
 
+    private fun startsOn(schedule: Schedule, date: LocalDate): Boolean =
+        if (schedule.once) date == schedule.date else date.dayOfWeek in schedule.days
+
+    private fun weekdays(schedule: Schedule): Set<DayOfWeek> =
+        if (schedule.once) setOf(schedule.date!!.dayOfWeek) else schedule.days
+
+    private fun windowEnd(schedule: Schedule, date: LocalDate): LocalDateTime =
+        date.atTime(schedule.start / 60, schedule.start % 60)
+            .plusMinutes(ScheduleTime.duration(schedule.start, schedule.end).toLong())
+
     private fun startDate(schedule: Schedule, endDate: LocalDate): LocalDate =
         if (schedule.start < schedule.end) endDate else endDate.minusDays(1)
 
@@ -97,7 +130,7 @@ object ScheduleResolver {
         if (!ScheduleTime.isActive(schedule.start, schedule.end, minute)) return null
         val today = now.toLocalDate()
         val started = if (schedule.start < schedule.end || minute >= schedule.start) today else today.minusDays(1)
-        return if (started.dayOfWeek in schedule.days) started.atTime(schedule.start / 60, schedule.start % 60) else null
+        return if (startsOn(schedule, started)) started.atTime(schedule.start / 60, schedule.start % 60) else null
     }
 
     // Walks back through windows that end exactly where the current one starts.
@@ -109,7 +142,7 @@ object ScheduleResolver {
             val boundary = start
             val previous = live.firstOrNull {
                 it.id !in seen && it.end == boundary.hour * 60 + boundary.minute &&
-                    startDate(it, boundary.toLocalDate()).dayOfWeek in it.days
+                    startsOn(it, startDate(it, boundary.toLocalDate()))
             } ?: return current to start
             seen += previous.id
             current = previous
@@ -123,7 +156,7 @@ object ScheduleResolver {
             (0L..8L).firstNotNullOfOrNull { offset ->
                 val endDate = now.toLocalDate().minusDays(offset)
                 val end = endDate.atTime(schedule.end / 60, schedule.end % 60)
-                end.takeIf { !it.isAfter(now) && startDate(schedule, endDate).dayOfWeek in schedule.days }
+                end.takeIf { !it.isAfter(now) && startsOn(schedule, startDate(schedule, endDate)) }
             }?.let { schedule to it }
         }.maxByOrNull { it.second }
 }

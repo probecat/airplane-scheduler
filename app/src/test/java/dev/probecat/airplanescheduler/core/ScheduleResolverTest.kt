@@ -234,6 +234,62 @@ class ScheduleResolverTest {
     }
 
     @Test
+    fun onceRunsOnlyOnItsDate() {
+        val once = night.copy(days = emptySet(), date = friday(0).toLocalDate())
+        assertTrue(ScheduleResolver.isActive(once, friday(23)))
+        assertTrue(ScheduleResolver.isActive(once, friday(6).plusDays(1)))
+        assertFalse(ScheduleResolver.isActive(once, friday(23).plusDays(7)))
+        assertFalse(ScheduleResolver.isActive(once, thursdayNight))
+        val zone = ZoneId.of("UTC")
+        assertEquals(friday(23), ScheduleResolver.nextStart(once, friday(12).atZone(zone))!!.toLocalDateTime())
+        assertEquals(friday(7).plusDays(1), ScheduleResolver.nextEnd(once, friday(12).atZone(zone))!!.toLocalDateTime())
+        assertNull(ScheduleResolver.nextStart(once, friday(23, 30).atZone(zone)))
+        assertNull(ScheduleResolver.nextChange(listOf(once), friday(8).plusDays(1).atZone(zone)))
+        assertEquals(Ended(friday(23), true), ScheduleResolver.lastEnded(listOf(once), friday(8).plusDays(1)))
+    }
+
+    @Test
+    fun onceTakesTheFirstWindowThatHasNotEnded() {
+        val once = night.copy(days = emptySet())
+        val today = friday(0).toLocalDate()
+        assertEquals(today, ScheduleResolver.dated(once, friday(12)).date)
+        assertEquals(today, ScheduleResolver.dated(once, friday(23, 30)).date)
+        // Thursday's window is still running.
+        assertEquals(today.minusDays(1), ScheduleResolver.dated(once, friday(3)).date)
+        val morning = once.copy(start = at(6), end = at(8))
+        assertEquals(today.plusDays(1), ScheduleResolver.dated(morning, friday(9)).date)
+        // A date whose window hasn't ended stays; one that's over moves on.
+        val tomorrow = once.copy(date = today.plusDays(1))
+        assertEquals(tomorrow, ScheduleResolver.dated(tomorrow, friday(12)))
+        assertEquals(today.plusDays(1), ScheduleResolver.dated(once.copy(date = today.minusDays(3)), friday(23, 30).plusDays(1)).date)
+        assertNull(ScheduleResolver.dated(night.copy(date = today), friday(12)).date)
+    }
+
+    @Test
+    fun onceSwitchesOffAfterItEnds() {
+        val once = night.copy(days = emptySet(), date = friday(0).toLocalDate())
+        assertFalse(ScheduleResolver.hasEnded(once, friday(6).plusDays(1)))
+        assertTrue(ScheduleResolver.hasEnded(once, friday(7).plusDays(1)))
+        assertEquals(listOf(once), ScheduleResolver.expire(listOf(once), friday(6).plusDays(1)))
+        assertEquals(listOf(once.copy(enabled = false), night), ScheduleResolver.expire(listOf(once, night), friday(7).plusDays(1)))
+    }
+
+    @Test
+    fun onceConflictsOnlyAroundItsDate() {
+        val friday = friday(0).toLocalDate()
+        val once = Schedule(id = 2, start = at(6), end = at(8), days = emptySet(), date = friday.plusDays(1))
+        // Friday night's window runs into Saturday morning.
+        assertEquals(night, ScheduleResolver.conflict(once, listOf(night)))
+        assertNull(ScheduleResolver.conflict(once, listOf(night.copy(days = setOf(SATURDAY)))))
+        val otherOnce = once.copy(id = 3, start = at(7), end = at(9))
+        assertEquals(once, ScheduleResolver.conflict(otherOnce, listOf(once)))
+        assertNull(ScheduleResolver.conflict(otherOnce.copy(date = friday), listOf(once)))
+        assertNull(ScheduleResolver.conflict(otherOnce.copy(start = at(8), end = at(9)), listOf(once)))
+        val fridayNight = night.copy(id = 4, days = emptySet(), date = friday)
+        assertEquals(fridayNight, ScheduleResolver.conflict(once, listOf(fridayNight)))
+    }
+
+    @Test
     fun invalidSchedulesNeverRun() {
         val empty = night.copy(days = emptySet())
         val zero = night.copy(end = night.start)

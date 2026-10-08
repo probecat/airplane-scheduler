@@ -53,18 +53,24 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun requestShizuku(): Boolean = ShizukuStatus.request()
 
-    fun newSchedule(): Schedule = Schedule(id = app.schedules.nextId(), start = 23 * 60, end = 7 * 60)
+    fun newSchedule(): Schedule = Schedule(id = app.schedules.nextId(), start = 23 * 60, end = 7 * 60, days = emptySet())
 
     fun isNew(schedule: Schedule): Boolean = app.schedules.get(schedule.id) == null
 
-    // Only enabled schedules are checked, so a disabled one may overlap anything.
-    fun conflict(schedule: Schedule): Schedule? =
-        if (schedule.enabled) ScheduleResolver.conflict(schedule, app.schedules.all) else null
+    // Only enabled schedules are checked, so a disabled one may overlap anything, and so may one
+    // that ran once and is over.
+    fun conflict(schedule: Schedule): Schedule? {
+        if (!schedule.enabled) return null
+        val now = LocalDateTime.now()
+        val others = app.schedules.all.filterNot { ScheduleResolver.hasEnded(it, now) }
+        return ScheduleResolver.conflict(ScheduleResolver.dated(schedule, now), others)
+    }
 
     // Returns the schedule in the way instead of switching on.
     fun setEnabled(schedule: Schedule, enabled: Boolean): Schedule? = save(schedule.copy(enabled = enabled))
 
-    fun save(schedule: Schedule): Schedule? {
+    fun save(edited: Schedule): Schedule? {
+        val schedule = ScheduleResolver.dated(edited, LocalDateTime.now())
         conflict(schedule)?.let { return it }
         val all = app.schedules.all
         commit(if (all.any { it.id == schedule.id }) all.map { if (it.id == schedule.id) schedule else it } else all + schedule)

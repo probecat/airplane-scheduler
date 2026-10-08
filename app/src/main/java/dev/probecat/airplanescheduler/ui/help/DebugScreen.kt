@@ -121,10 +121,10 @@ private fun scheduleDetails(schedule: Schedule, now: ZonedDateTime): String = bu
     appendLine("#${schedule.id}$name: ${if (schedule.enabled) "on" else "off"}")
     appendLine("  Window: ${ScheduleTime.format(schedule.start)}–${ScheduleTime.format(schedule.end)}")
     appendLine(
-        "  Days: " + if (schedule.days == Schedule.EVERY_DAY) {
-            "every day"
-        } else {
-            schedule.days.sorted().joinToString(" ") { it.name.take(3).lowercase() }
+        "  Days: " + when {
+            schedule.once -> "once, ${schedule.date ?: "no date"}"
+            schedule.days == Schedule.EVERY_DAY -> "every day"
+            else -> schedule.days.sorted().joinToString(" ") { it.name.take(3).lowercase() }
         },
     )
     appendLine("  Wi-Fi at start: ${if (schedule.disableWifi) "disable" else "leave unchanged"}")

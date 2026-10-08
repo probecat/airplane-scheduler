@@ -21,7 +21,10 @@ object AirplaneController {
     // Runs the start or end that the alarm fired for.
     fun onAlarm(context: Context, done: () -> Unit) {
         val app = App.from(context)
-        run(app, Boundary.atAlarm(app.schedules.all, LocalDateTime.now(), app.settings.started), done)
+        val now = LocalDateTime.now()
+        val step = Boundary.atAlarm(app.schedules.all, now, app.settings.started)
+        ScheduleUpdater.expire(app, now)
+        run(app, step, done)
     }
 
     fun run(context: Context, step: Boundary.Step, done: () -> Unit) {

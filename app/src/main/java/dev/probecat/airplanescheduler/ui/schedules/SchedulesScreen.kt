@@ -73,6 +73,7 @@ import dev.probecat.airplanescheduler.ui.DismissibleSnackbarHost
 import dev.probecat.airplanescheduler.ui.Format
 import dev.probecat.airplanescheduler.ui.rememberFormat
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,7 +92,7 @@ fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () 
     fun showConflict(conflict: Schedule) {
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
-            snackbar.showSnackbar("Overlaps ${format.label(conflict)}. Switch that one off or change the times first.")
+            snackbar.showSnackbar("Overlaps ${format.label(conflict, now.toLocalDate())}. Switch that one off or change the times first.")
         }
     }
 
@@ -144,6 +145,7 @@ fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () 
                     ScheduleCard(
                         schedule = schedule,
                         active = schedule.id == active?.id,
+                        today = now.toLocalDate(),
                         format = format,
                         onClick = { editing = schedule },
                         onToggle = { enabled -> viewModel.setEnabled(schedule, enabled)?.let(::showConflict) },
@@ -158,6 +160,7 @@ fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () 
         ScheduleSheet(
             initial = schedule,
             isNew = viewModel.isNew(schedule),
+            now = now,
             conflictOf = viewModel::conflict,
             onDismiss = { editing = null },
             onSave = { viewModel.save(it) == null },
@@ -298,6 +301,7 @@ private fun EmptyState(modifier: Modifier = Modifier) {
 private fun ScheduleCard(
     schedule: Schedule,
     active: Boolean,
+    today: LocalDate,
     format: Format,
     onClick: () -> Unit,
     onToggle: (Boolean) -> Unit,
@@ -307,7 +311,7 @@ private fun ScheduleCard(
     val container by animateColorAsState(if (schedule.enabled) colors.primaryContainer else colors.surfaceContainer)
     val content = if (schedule.enabled) colors.onPrimaryContainer else colors.onSurfaceVariant
     // An em space between days and name.
-    val summary = listOf(format.days(schedule.days), schedule.name).filter { it.isNotBlank() }.joinToString("\u2003")
+    val summary = listOf(format.repeats(schedule, today), schedule.name).filter { it.isNotBlank() }.joinToString("\u2003")
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
@@ -343,7 +347,7 @@ private fun ScheduleCard(
                     checked = schedule.enabled,
                     onCheckedChange = onToggle,
                     modifier = Modifier.semantics {
-                        contentDescription = "${format.window(schedule)}, ${format.days(schedule.days)}"
+                        contentDescription = "${format.window(schedule)}, ${format.repeats(schedule, today)}"
                     },
                 )
             }

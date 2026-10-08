@@ -2,6 +2,7 @@ package dev.probecat.airplanescheduler.system
 
 import android.content.Context
 import dev.probecat.airplanescheduler.core.Boundary
+import dev.probecat.airplanescheduler.core.ScheduleResolver
 import dev.probecat.airplanescheduler.data.Schedule
 import java.time.LocalDateTime
 
@@ -16,5 +17,13 @@ object ScheduleUpdater {
         AirplaneController.run(app, step) {}
         val needsShizuku = step is Boundary.Step.Start || (step is Boundary.Step.End && !step.changes.isEmpty)
         return !needsShizuku || ShizukuStatus.isReady()
+    }
+
+    // Only safe once nothing needs the end of a schedule that ran once, since a switched-off
+    // schedule doesn't end.
+    fun expire(context: Context, now: LocalDateTime) {
+        val app = App.from(context)
+        val schedules = ScheduleResolver.expire(app.schedules.all, now)
+        if (schedules != app.schedules.all) app.schedules.replaceAll(schedules)
     }
 }

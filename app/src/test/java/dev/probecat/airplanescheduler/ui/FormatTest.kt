@@ -10,6 +10,7 @@ import java.time.DayOfWeek.SUNDAY
 import java.time.DayOfWeek.THURSDAY
 import java.time.DayOfWeek.TUESDAY
 import java.time.DayOfWeek.WEDNESDAY
+import java.time.LocalDate
 import java.util.Locale
 
 class FormatTest {
@@ -36,8 +37,19 @@ class FormatTest {
     }
 
     @Test
-    fun everyDayAndNoDaysAreNamed() {
+    fun everyDayAndOnceAreNamed() {
         assertEquals("Every day", us.days(Schedule.EVERY_DAY))
-        assertEquals("No days", us.days(emptySet()))
+        assertEquals("Once", us.days(emptySet()))
+    }
+
+    @Test
+    fun onceShowsItsDateWhileOn() {
+        val today = LocalDate.of(2026, 10, 9)
+        val once = Schedule(id = 1, start = 0, end = 60, days = emptySet(), date = today)
+        assertEquals("Once, today", us.repeats(once, today))
+        assertEquals("Once, tomorrow", us.repeats(once.copy(date = today.plusDays(1)), today))
+        assertEquals("Once, yesterday", us.repeats(once.copy(date = today.minusDays(1)), today))
+        assertEquals("Once", us.repeats(once.copy(enabled = false), today))
+        assertEquals("12:00\u00A0AM – 1:00\u00A0AM (once, today)", us.label(once, today))
     }
 }

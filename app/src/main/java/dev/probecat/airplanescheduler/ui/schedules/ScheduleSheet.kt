@@ -75,6 +75,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.probecat.airplanescheduler.R
+import dev.probecat.airplanescheduler.core.ScheduleResolver
 import dev.probecat.airplanescheduler.core.ScheduleTime
 import dev.probecat.airplanescheduler.data.Schedule
 import dev.probecat.airplanescheduler.ui.ErrorText
@@ -84,6 +85,7 @@ import dev.probecat.airplanescheduler.ui.rememberFormat
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import java.time.DayOfWeek
+import java.time.LocalDateTime
 
 val ScheduleSaver: Saver<Schedule?, String> = Saver(
     save = { schedule -> schedule?.let { Json.encodeToString(it) } },
@@ -99,6 +101,7 @@ private const val NAME_PLACEHOLDER = "Unnamed"
 fun ScheduleSheet(
     initial: Schedule,
     isNew: Boolean,
+    now: LocalDateTime,
     conflictOf: (Schedule) -> Schedule?,
     onDismiss: () -> Unit,
     onSave: (Schedule) -> Boolean,
@@ -112,7 +115,6 @@ fun ScheduleSheet(
     val schedule = draft ?: initial
 
     val sameTimes = schedule.start == schedule.end
-    val noDays = schedule.days.isEmpty()
     val conflict = conflictOf(schedule)
 
     fun close(then: () -> Unit = {}) {
@@ -144,7 +146,7 @@ fun ScheduleSheet(
                 when {
                     sameTimes -> ErrorText("Start and end can't be the same time.")
                     conflict != null -> ErrorText(
-                        "Overlaps ${format.label(conflict)}. Change the times or days, or switch that schedule off.",
+                        "Overlaps ${format.label(conflict, now.toLocalDate())}. Change the times or days, or switch that schedule off.",
                     )
                     else -> Text(
                         "Airplane mode stays on for ${format.duration(ScheduleTime.duration(schedule.start, schedule.end))}.",
@@ -162,8 +164,13 @@ fun ScheduleSheet(
             DayChips(format, schedule.days, Modifier.padding(horizontal = 16.dp)) { day ->
                 draft = schedule.copy(days = if (day in schedule.days) schedule.days - day else schedule.days + day)
             }
-            if (noDays) {
-                ErrorText("Pick at least one day.", Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
+            if (schedule.once) {
+                Text(
+                    onceText(schedule, now),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                )
             }
 
             Spacer(Modifier.height(8.dp))
@@ -203,7 +210,7 @@ fun ScheduleSheet(
                 }
                 Button(
                     onClick = { if (onSave(schedule.copy(name = schedule.name.trim()))) close() },
-                    enabled = !sameTimes && !noDays && conflict == null,
+                    enabled = !sameTimes && conflict == null,
                     modifier = Modifier.weight(1f),
                 ) { Text("Save") }
             }
@@ -221,6 +228,17 @@ fun ScheduleSheet(
                 picking = null
             },
         )
+    }
+}
+
+// Saving picks the first window that hasn't ended, which may be running already.
+private fun onceText(schedule: Schedule, now: LocalDateTime): String {
+    if (!schedule.enabled) return "Runs once, after you switch it on."
+    val date = ScheduleResolver.dated(schedule, now).date!!
+    return when {
+        !date.atTime(schedule.start / 60, schedule.start % 60).isAfter(now) -> "Runs once, starting now."
+        date == now.toLocalDate() -> "Runs once, starting today."
+        else -> "Runs once, starting tomorrow."
     }
 }
 

@@ -38,6 +38,10 @@ private fun sections(format: Format) = listOf(
         "switched on cannot overlap. If one schedule ends at the same time that another starts, they work as " +
         "one schedule. Airplane mode stays on between them. Wi-Fi follows “Turn off Wi-Fi at start” of the " +
         "first schedule and “Turn Wi-Fi back on at end” of the last schedule.",
+    "Schedules without days" to
+        "A schedule with no days selected runs once, then switches itself off. It runs at the next time " +
+        "its times come around, or right away if the current time is already inside them. Switch it on " +
+        "again to run it once more.",
     "Changing schedules" to
         "If you switch off or delete a schedule while it is active, it ends immediately. The app undoes what " +
         "it changed at the start, as at a normal end. If you switch on or add a schedule that covers the " +

@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.em
 import dev.probecat.airplanescheduler.data.Schedule
 import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -55,9 +56,24 @@ class Format(val is24Hour: Boolean, val locale: Locale) {
     fun days(days: Set<DayOfWeek>): String {
         if (days == Schedule.EVERY_DAY) return "Every day"
         val ordered = week.filter { it in days }
-        if (ordered.isEmpty()) return "No days"
+        if (ordered.isEmpty()) return "Once"
         val run = ordered.size >= 3 && week.indexOf(ordered.last()) - week.indexOf(ordered.first()) == ordered.size - 1
         return if (run) "${short(ordered.first())}–${short(ordered.last())}" else ordered.joinToString(" ", transform = ::short)
+    }
+
+    // "Once, today" for a schedule that runs once, otherwise its days.
+    fun repeats(schedule: Schedule, today: LocalDate): String =
+        if (schedule.once) listOfNotNull("Once", onceDate(schedule, today)).joinToString(", ") else days(schedule.days)
+
+    // When a schedule that runs once starts; nothing while it's off, since switching on picks a new date.
+    private fun onceDate(schedule: Schedule, today: LocalDate): String? {
+        val start = schedule.date?.takeIf { schedule.enabled } ?: return null
+        return when (start) {
+            today -> "today"
+            today.plusDays(1) -> "tomorrow"
+            today.minusDays(1) -> "yesterday"
+            else -> null
+        }
     }
 
     private fun short(day: DayOfWeek): String = day.getDisplayName(TextStyle.SHORT, locale)
@@ -66,9 +82,13 @@ class Format(val is24Hour: Boolean, val locale: Locale) {
 
     fun dayLetter(day: DayOfWeek): String = day.getDisplayName(TextStyle.NARROW, locale)
 
-    fun label(schedule: Schedule): String {
+    fun label(schedule: Schedule, today: LocalDate): String {
         if (schedule.name.isNotBlank()) return "“${schedule.name}”"
-        val days = if (schedule.days == Schedule.EVERY_DAY) "every day" else days(schedule.days)
+        val days = when {
+            schedule.once -> listOfNotNull("once", onceDate(schedule, today)).joinToString(", ")
+            schedule.days == Schedule.EVERY_DAY -> "every day"
+            else -> days(schedule.days)
+        }
         return "${window(schedule)} ($days)"
     }
 

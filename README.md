@@ -8,7 +8,7 @@ Turns airplane mode on and off on a schedule, so your phone goes quiet at night 
 
 ## Features
 
-- Any number of schedules, on any days of the week, including overnight time ranges.
+- Any number of schedules, one-off or on any days of the week, including overnight time ranges.
 - Optionally turns off Wi-Fi at the start and back on at the end.
 - Undoes only what it changed: airplane mode or Wi-Fi that you set yourself stays as you left it.
 - An optional reminder an hour before a schedule starts if Shizuku isn't ready.
