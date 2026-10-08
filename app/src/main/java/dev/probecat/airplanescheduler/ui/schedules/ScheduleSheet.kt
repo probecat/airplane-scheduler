@@ -41,6 +41,7 @@ import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -95,24 +96,27 @@ val ScheduleSaver: Saver<Schedule?, String> = Saver(
 private const val NAME_LENGTH = 40
 private const val NAME_PLACEHOLDER = "Unnamed"
 
-// Edits apply only on Save; closing the sheet any other way discards them.
+// Edits apply only on Save. Closing the sheet any other way keeps them through [onEdit] for next time.
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleSheet(
     initial: Schedule,
+    edits: Schedule,
     isNew: Boolean,
     now: LocalDateTime,
     conflictOf: (Schedule) -> Schedule?,
     onDismiss: () -> Unit,
+    onEdit: (Schedule) -> Unit,
     onSave: (Schedule) -> Boolean,
     onDelete: (Schedule) -> Unit,
 ) {
     val format = rememberFormat()
     val scope = rememberCoroutineScope()
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var draft by rememberSaveable(initial.id, stateSaver = ScheduleSaver) { mutableStateOf(initial) }
+    var draft by rememberSaveable(initial.id, stateSaver = ScheduleSaver) { mutableStateOf(edits) }
     var picking by rememberSaveable { mutableStateOf<Boolean?>(null) }
-    val schedule = draft ?: initial
+    val schedule = draft ?: edits
+    LaunchedEffect(schedule) { onEdit(schedule) }
 
     val sameTimes = schedule.start == schedule.end
     val conflict = conflictOf(schedule)

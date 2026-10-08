@@ -178,10 +178,12 @@ fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () 
     editing?.let { schedule ->
         ScheduleSheet(
             initial = schedule,
+            edits = viewModel.draft(schedule),
             isNew = viewModel.isNew(schedule),
             now = now,
             conflictOf = viewModel::conflict,
             onDismiss = { editing = null },
+            onEdit = { viewModel.keepDraft(schedule, it) },
             onSave = { viewModel.save(it) == null },
             onDelete = ::delete,
         )

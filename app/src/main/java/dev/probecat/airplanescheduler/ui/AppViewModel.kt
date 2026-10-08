@@ -62,6 +62,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         enableWifi = false,
     )
 
+    // Unsaved sheet edits, kept until saved or the app closes. Each is dropped once the schedule it
+    // started from changes.
+    private val drafts = mutableMapOf<Long, Pair<Schedule, Schedule>>()
+
+    fun draft(schedule: Schedule): Schedule = drafts[schedule.id]?.takeIf { it.first == schedule }?.second ?: schedule
+
+    fun keepDraft(base: Schedule, draft: Schedule) {
+        if (draft == base) drafts.remove(base.id) else drafts[base.id] = base to draft
+    }
+
     fun isNew(schedule: Schedule): Boolean = app.schedules.get(schedule.id) == null
 
     // Only enabled schedules are checked, so a disabled one may overlap anything, and so may one
@@ -79,6 +89,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun save(edited: Schedule): Schedule? {
         val schedule = ScheduleResolver.dated(edited, LocalDateTime.now())
         conflict(schedule)?.let { return it }
+        drafts.remove(schedule.id)
         val all = app.schedules.all
         val replaced = all.map { if (it.id == schedule.id) schedule else it }
         commit(if (all.any { it.id == schedule.id }) replaced else all + schedule)
@@ -86,6 +97,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun delete(schedule: Schedule) {
+        drafts.remove(schedule.id)
         commit(app.schedules.all.filterNot { it.id == schedule.id })
     }
 
