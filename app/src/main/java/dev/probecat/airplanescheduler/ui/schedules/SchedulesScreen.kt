@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -37,6 +38,10 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxDefaults
+import androidx.compose.material3.SwipeToDismissBoxState
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -55,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -73,6 +79,7 @@ import dev.probecat.airplanescheduler.ui.DismissibleSnackbarHost
 import dev.probecat.airplanescheduler.ui.Format
 import dev.probecat.airplanescheduler.ui.rememberFormat
 import java.time.LocalDate
+import kotlin.math.abs
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,6 +100,17 @@ fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () 
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
             snackbar.showSnackbar("This schedule overlaps ${format.label(conflict, now.toLocalDate())}.")
+        }
+    }
+
+    fun delete(schedule: Schedule) {
+        viewModel.delete(schedule)
+        scope.launch {
+            snackbar.currentSnackbarData?.dismiss()
+            val result = snackbar.showSnackbar("Schedule deleted", "Undo", duration = SnackbarDuration.Long)
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.restore(schedule)
+            }
         }
     }
 
@@ -142,15 +160,16 @@ fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () 
                     item(key = "empty") { EmptyState(Modifier.fillParentMaxHeight(0.6f)) }
                 }
                 items(schedules, key = { it.id }) { schedule ->
-                    ScheduleCard(
-                        schedule = schedule,
-                        active = schedule.id == active?.id,
-                        today = now.toLocalDate(),
-                        format = format,
-                        onClick = { editing = schedule },
-                        onToggle = { enabled -> viewModel.setEnabled(schedule, enabled)?.let(::showConflict) },
-                        modifier = Modifier.animateItem(),
-                    )
+                    SwipeToDelete(onDelete = { delete(schedule) }, modifier = Modifier.animateItem()) {
+                        ScheduleCard(
+                            schedule = schedule,
+                            active = schedule.id == active?.id,
+                            today = now.toLocalDate(),
+                            format = format,
+                            onClick = { editing = schedule },
+                            onToggle = { enabled -> viewModel.setEnabled(schedule, enabled)?.let(::showConflict) },
+                        )
+                    }
                 }
             }
         }
@@ -164,16 +183,7 @@ fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () 
             conflictOf = viewModel::conflict,
             onDismiss = { editing = null },
             onSave = { viewModel.save(it) == null },
-            onDelete = { deleted ->
-                viewModel.delete(deleted)
-                scope.launch {
-                    snackbar.currentSnackbarData?.dismiss()
-                    val result = snackbar.showSnackbar("Schedule deleted", "Undo", duration = SnackbarDuration.Long)
-                    if (result == SnackbarResult.ActionPerformed) {
-                        viewModel.restore(deleted)
-                    }
-                }
-            },
+            onDelete = ::delete,
         )
     }
 
@@ -304,6 +314,43 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(16.dp))
         Text("No schedules yet", style = MaterialTheme.typography.titleLarge)
     }
+}
+
+@Composable
+private fun SwipeToDelete(onDelete: () -> Unit, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    // Not saveable: ids are reused, and a saved dismissed state would delete the next schedule with the same id.
+    val threshold = SwipeToDismissBoxDefaults.positionalThreshold
+    val state = remember { SwipeToDismissBoxState(SwipeToDismissBoxValue.Settled, threshold) }
+    SwipeToDismissBox(
+        state = state,
+        modifier = modifier,
+        onDismiss = { onDelete() },
+        backgroundContent = {
+            val direction = state.dismissDirection
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = if (direction == SwipeToDismissBoxValue.StartToEnd) {
+                    Alignment.CenterStart
+                } else {
+                    Alignment.CenterEnd
+                },
+            ) {
+                if (direction != SwipeToDismissBoxValue.Settled) {
+                    val width = with(LocalDensity.current) { abs(state.requireOffset()).toDp() - 8.dp }
+                    Surface(
+                        shape = RoundedCornerShape(28.dp),
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.fillMaxHeight().width(width.coerceAtLeast(0.dp)),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(painterResource(R.drawable.ic_delete), contentDescription = null)
+                        }
+                    }
+                }
+            }
+        },
+        content = { content() },
+    )
 }
 
 @Composable
