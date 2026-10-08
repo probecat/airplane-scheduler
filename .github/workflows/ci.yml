@@ -24,6 +24,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.sha }}
+  cancel-in-progress: true
+
 jobs:
   ktlint:
     runs-on: ubuntu-latest
