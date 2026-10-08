@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.em
@@ -48,7 +49,10 @@ class Format(val is24Hour: Boolean, val locale: Locale) {
 
     fun window(schedule: Schedule, suffixSize: TextUnit): AnnotatedString = buildAnnotatedString {
         append(time(schedule.start, suffixSize))
-        append(" – ")
+        append(" ")
+        // Raised to sit level with the middle of the digits.
+        withStyle(SpanStyle(fontSize = suffixSize, baselineShift = BaselineShift(0.2f))) { append("–") }
+        append(" ")
         append(time(schedule.end, suffixSize))
     }
 
