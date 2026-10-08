@@ -51,6 +51,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -264,6 +265,7 @@ private fun DayChips(format: Format, days: Set<DayOfWeek>, modifier: Modifier = 
                 modifier = Modifier
                     .minimumInteractiveComponentSize()
                     .size(40.dp)
+                    .clip(CircleShape)
                     .semantics {
                         contentDescription = format.dayName(day)
                         stateDescription = if (selected) "Repeats" else "Doesn't repeat"
