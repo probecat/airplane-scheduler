@@ -117,6 +117,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun resetSettings() = updateSettings { Settings() }
+
     private fun commit(schedules: List<Schedule>) {
         if (!ScheduleUpdater.update(app, schedules)) {
             ShizukuStatus.request()

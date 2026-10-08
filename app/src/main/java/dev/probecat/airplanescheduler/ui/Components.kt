@@ -75,6 +75,7 @@ fun SettingRow(
     modifier: Modifier = Modifier,
     text: String? = null,
     enabled: Boolean = true,
+    danger: Boolean = false,
     trailing: (@Composable () -> Unit)? = null,
     onClick: (() -> Unit)? = null,
 ) {
@@ -85,7 +86,14 @@ fun SettingRow(
         supportingContent = text?.let { { Text(it) } },
         leadingContent = { Icon(painterResource(icon), contentDescription = null) },
         trailingContent = trailing,
-        colors = if (enabled) {
+        colors = if (enabled && danger) {
+            val error = MaterialTheme.colorScheme.error
+            ListItemDefaults.colors(
+                containerColor = Color.Transparent,
+                headlineColor = error,
+                leadingIconColor = error,
+            )
+        } else if (enabled) {
             ListItemDefaults.colors(containerColor = Color.Transparent)
         } else {
             ListItemDefaults.colors(

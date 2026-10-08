@@ -61,6 +61,7 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
     val shizuku by viewModel.shizuku.collectAsStateWithLifecycle()
     val shizukuApp = context.packageManager.getLaunchIntentForPackage(ShizukuStatus.SHIZUKU_PACKAGE)
     var explaining by rememberSaveable { mutableStateOf<ShizukuState?>(null) }
+    var resetting by rememberSaveable { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { notifications = notificationsAllowed(context) }
     // The reminder is useless without notifications, so a denial turns it back off.
     val requestNotifications =
@@ -142,6 +143,14 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
             },
         )
 
+        SectionHeader("Reset")
+        SettingRow(
+            icon = R.drawable.ic_reset_settings,
+            title = "Reset preferences",
+            danger = true,
+            onClick = { resetting = true },
+        )
+
         SectionHeader("About")
         SettingRow(
             icon = R.drawable.ic_info,
@@ -154,6 +163,22 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
 
     explaining?.let { state ->
         ShizukuDialog(state, onHelp = null, onDismiss = { explaining = null })
+    }
+
+    if (resetting) {
+        AlertDialog(
+            onDismissRequest = { resetting = false },
+            title = { Text("Reset preferences?") },
+            text = { Text("Settings go back to their defaults. Schedules are kept.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.resetSettings()
+                    reminderDenied = false
+                    resetting = false
+                }) { Text("Reset") }
+            },
+            dismissButton = { TextButton(onClick = { resetting = false }) { Text("Cancel") } },
+        )
     }
 
     if (choosingTheme) {
