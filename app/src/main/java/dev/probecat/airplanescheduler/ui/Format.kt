@@ -16,6 +16,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.time.format.TextStyle
 import java.time.temporal.WeekFields
 import java.util.Locale
@@ -61,18 +62,17 @@ class Format(val is24Hour: Boolean, val locale: Locale) {
         return ordered.joinToString(" ", transform = ::short)
     }
 
-    // "Once, today" for a schedule that runs once, otherwise its days.
     fun repeats(schedule: Schedule, today: LocalDate): String =
-        if (schedule.once) listOfNotNull("Once", onceDate(schedule, today)).joinToString(", ") else days(schedule.days)
+        if (schedule.once) onceDate(schedule, today).replaceFirstChar { it.titlecase(locale) } else days(schedule.days)
 
-    // When a schedule that runs once starts; nothing while it's off, since switching on picks a new date.
-    private fun onceDate(schedule: Schedule, today: LocalDate): String? {
-        val start = schedule.date?.takeIf { schedule.enabled } ?: return null
+    // Nothing is scheduled while it's off, since switching on picks a new date.
+    private fun onceDate(schedule: Schedule, today: LocalDate): String {
+        val start = schedule.date?.takeIf { schedule.enabled } ?: return "not scheduled"
         return when (start) {
             today -> "today"
             today.plusDays(1) -> "tomorrow"
             today.minusDays(1) -> "yesterday"
-            else -> null
+            else -> start.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))
         }
     }
 
@@ -85,7 +85,7 @@ class Format(val is24Hour: Boolean, val locale: Locale) {
     fun label(schedule: Schedule, today: LocalDate): String {
         if (schedule.name.isNotBlank()) return "“${schedule.name}”"
         val days = when {
-            schedule.once -> listOfNotNull("once", onceDate(schedule, today)).joinToString(", ")
+            schedule.once -> onceDate(schedule, today)
             schedule.days == Schedule.EVERY_DAY -> "every day"
             else -> days(schedule.days)
         }
