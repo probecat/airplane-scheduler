@@ -14,8 +14,8 @@ object AlarmScheduler {
     const val REMIND_BEFORE_MINUTES = 60L
     private const val FLAGS = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 
-    // One exact alarm for the next start or end of any schedule, plus the reminder.
-    // Recomputed in local time on every alarm so clock and time-zone changes stay correct.
+    // Only the next alarm of each kind is set, recomputed in local time on every alarm so clock and
+    // time-zone changes stay correct.
     fun scheduleAll(context: Context) {
         val app = App.from(context)
         val schedules = app.schedules.all

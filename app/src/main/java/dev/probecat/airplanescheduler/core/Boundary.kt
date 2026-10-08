@@ -7,13 +7,13 @@ import java.time.LocalDateTime
 // What the app does when a window starts or ends. It undoes only what it changed itself, and it
 // skips a start or end that it missed instead of catching up later.
 object Boundary {
-    // The window the app started last, by the start of its chain, and what it changed then.
+    // The last window the app started, keyed by its chain's start, and what it changed then.
     data class Started(val window: LocalDateTime, val changes: Changes)
 
     sealed interface Step {
         data class Start(val window: ScheduleResolver.Window) : Step
 
-        // Forgets the started window and undoes [changes], which may be none.
+        // Forgets the started window and undoes [changes], if any.
         data class End(val changes: Changes) : Step
 
         // An edit moved the start of the window that is running.
@@ -22,7 +22,7 @@ object Boundary {
         data object None : Step
     }
 
-    // At the alarm for the next start or end. A boundary between touching windows changes nothing.
+    // A boundary between touching windows changes nothing.
     fun atAlarm(schedules: List<Schedule>, now: LocalDateTime, started: Started?): Step {
         val window = ScheduleResolver.window(schedules, now)
         if (window != null) {
@@ -35,8 +35,7 @@ object Boundary {
         return Step.End(ConnectivityPlan.end(started.changes, ended.enableWifi))
     }
 
-    // After the schedules change from [old] to [new]. A window that the edit switches on starts at
-    // once, and one that it switches off ends at once.
+    // A window that the edit switches on starts at once, and one that it switches off ends at once.
     fun atEdit(old: List<Schedule>, new: List<Schedule>, now: LocalDateTime, started: Started?): Step {
         val before = ScheduleResolver.window(old, now)
         val after = ScheduleResolver.window(new, now)

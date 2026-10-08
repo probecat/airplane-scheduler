@@ -52,8 +52,8 @@ class MainActivity : ComponentActivity() {
                 NavHost(
                     navController,
                     startDestination = SchedulesRoute,
-                    // Pages switch at once, without animation, as in Droid-ify. Back reuses these;
-                    // predictive back has its own defaults.
+                    // No animation, as in Droid-ify. Pop transitions default to these; predictive
+                    // back's don't.
                     enterTransition = { EnterTransition.None },
                     exitTransition = { ExitTransition.None },
                     predictivePopEnterTransition = { EnterTransition.None },

@@ -67,7 +67,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         return ScheduleResolver.conflict(ScheduleResolver.dated(schedule, now), others)
     }
 
-    // Returns the schedule in the way instead of switching on.
+    // Returns the overlapping schedule instead of switching on.
     fun setEnabled(schedule: Schedule, enabled: Boolean): Schedule? = save(schedule.copy(enabled = enabled))
 
     fun save(edited: Schedule): Schedule? {
@@ -83,7 +83,8 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         commit(app.schedules.all.filterNot { it.id == schedule.id })
     }
 
-    // Undo of a delete. If something took its place meanwhile, it comes back switched off.
+    // Undoes a delete. It takes a new id if its old one was reused, and comes back switched off if it
+    // now overlaps another schedule.
     fun restore(schedule: Schedule) {
         val id = if (app.schedules.get(schedule.id) == null) schedule.id else app.schedules.nextId()
         val restored = schedule.copy(id = id).let { if (conflict(it) != null) it.copy(enabled = false) else it }

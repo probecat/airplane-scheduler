@@ -25,7 +25,6 @@ class Format(val is24Hour: Boolean, val locale: Locale) {
     private val clock = DateTimeFormatter.ofPattern(if (is24Hour) "HH:mm" else "h:mm", locale)
     private val marker = DateTimeFormatter.ofPattern("a", locale)
 
-    // Days in the locale's week order, starting on Sunday or Monday.
     val week: List<DayOfWeek> = WeekFields.of(locale).firstDayOfWeek.let { first ->
         List(7) { first.plus(it.toLong()) }
     }

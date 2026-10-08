@@ -6,8 +6,8 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
 
-// Wall-clock answers across all schedules. A window starts on one of its days, or on its date when
-// it runs once, and, when the end is at or before the start, ends the next day.
+// Works in wall-clock time. A window starts on one of its days, or on its date when it runs once,
+// and ends the next day when its end is before its start.
 object ScheduleResolver {
     private const val WEEK = 7 * ScheduleTime.DAY
 
@@ -38,7 +38,7 @@ object ScheduleResolver {
 
     fun isActive(schedule: Schedule, now: LocalDateTime): Boolean = windowStart(schedule, now) != null
 
-    // The enabled schedule whose window contains [now]. Overlaps are refused, so there is at most one.
+    // Overlaps are refused, so at most one schedule matches.
     fun activeSchedule(schedules: List<Schedule>, now: LocalDateTime): Schedule? =
         live(schedules).firstOrNull { isActive(it, now) }
 
@@ -101,7 +101,6 @@ object ScheduleResolver {
     fun nextStart(schedules: List<Schedule>, now: ZonedDateTime): ZonedDateTime? =
         live(schedules).mapNotNull { nextStart(it, now) }.minOrNull()
 
-    // The next start or end of any enabled schedule, when the plan may change.
     fun nextChange(schedules: List<Schedule>, now: ZonedDateTime): ZonedDateTime? =
         live(schedules).flatMap { listOfNotNull(nextStart(it, now), nextEnd(it, now)) }.minOrNull()
 
@@ -154,7 +153,6 @@ object ScheduleResolver {
         }
     }
 
-    // The schedule whose window ended most recently, and when.
     private fun lastEnd(live: List<Schedule>, now: LocalDateTime): Pair<Schedule, LocalDateTime>? =
         live.mapNotNull { schedule ->
             (0L..8L).firstNotNullOfOrNull { offset ->

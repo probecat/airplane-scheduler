@@ -21,7 +21,7 @@ object ShizukuStatus {
 
     fun isReady(): Boolean = current() == ShizukuState.READY
 
-    // Shows Shizuku's permission dialog. Returns false when it can't, such as after "Deny and don't ask again".
+    // False when the dialog can't show, such as after "Deny and don't ask again".
     fun request(): Boolean = try {
         when {
             !Shizuku.pingBinder() -> false

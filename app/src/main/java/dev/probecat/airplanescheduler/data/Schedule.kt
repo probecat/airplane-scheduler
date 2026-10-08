@@ -13,15 +13,13 @@ import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 data class Schedule(
-    // Stable; also picks the alarm request codes.
     val id: Long,
     val name: String = "",
-    // Minutes since midnight. An end at or before the start ends the next day.
+    // Minutes since midnight. An end before the start is on the next day; an equal one is invalid.
     val start: Int,
     val end: Int,
     // Days the window starts on. None means it runs once, starting on [date].
     val days: Set<DayOfWeek> = EVERY_DAY,
-    // Set when the schedule is saved without days.
     @Serializable(with = DateSerializer::class)
     val date: LocalDate? = null,
     val enabled: Boolean = true,

@@ -33,7 +33,6 @@ class SettingsRepository(context: Context) {
         }
     }
 
-    // The window the app started last, so its end undoes only what the start changed.
     var started: Boundary.Started?
         get() = prefs.getString("startedWindow", null)?.let { window ->
             Boundary.Started(LocalDateTime.parse(window), Changes.of(prefs.getInt("startedChanges", 0)))

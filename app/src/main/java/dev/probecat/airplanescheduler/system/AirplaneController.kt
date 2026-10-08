@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import rikka.shizuku.Shizuku
 
 object AirplaneController {
-    // Runs the start or end that the alarm fired for.
     fun onAlarm(context: Context, done: () -> Unit) {
         val app = App.from(context)
         val now = LocalDateTime.now()
@@ -109,7 +108,7 @@ object AirplaneController {
         awaitBinder { received -> if (received) bind() else finish(Changes.NONE) }
     }
 
-    // A freshly started process receives the Shizuku binder asynchronously, so give it a moment.
+    // A freshly started process receives the Shizuku binder asynchronously, so wait up to 7 s.
     fun awaitBinder(done: (Boolean) -> Unit) {
         if (Shizuku.pingBinder()) {
             done(true)

@@ -29,8 +29,7 @@ object ConnectivityPlan {
     // An end undoes the start's changes, and turns Wi-Fi back on only when the schedule asks for it.
     fun end(started: Changes, enableWifi: Boolean) = started.copy(wifi = started.wifi && enableWifi)
 
-    // Each command with the change it makes. Wi-Fi goes down before airplane mode starts, and comes
-    // up after it ends.
+    // Wi-Fi goes off before airplane mode turns on, and back on after it turns off.
     fun commands(enabled: Boolean, changes: Changes): List<Pair<Int, List<String>>> {
         val airplane = (AIRPLANE to if (enabled) AIRPLANE_ON else AIRPLANE_OFF).takeIf { changes.airplane }
         val wifi = (WIFI to if (enabled) WIFI_OFF else WIFI_ON).takeIf { changes.wifi }

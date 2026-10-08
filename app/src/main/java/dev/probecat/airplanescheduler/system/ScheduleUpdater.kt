@@ -7,8 +7,7 @@ import dev.probecat.airplanescheduler.data.Schedule
 import java.time.LocalDateTime
 
 object ScheduleUpdater {
-    // Saves the list and resets the alarms. A window that the edit switches on or off starts or
-    // ends at once. Returns false when that needs Shizuku but it isn't ready.
+    // Returns false when the edit starts or ends a window but Shizuku isn't ready.
     fun update(context: Context, schedules: List<Schedule>): Boolean {
         val app = App.from(context)
         val step = Boundary.atEdit(app.schedules.all, schedules, LocalDateTime.now(), app.settings.started)
