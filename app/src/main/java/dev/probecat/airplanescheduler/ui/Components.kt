@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -50,7 +51,14 @@ fun SwitchRow(icon: Int, title: String, checked: Boolean, enabled: Boolean = tru
         icon = icon,
         title = title,
         enabled = enabled,
-        trailing = { Switch(checked = checked, onCheckedChange = null, enabled = enabled) },
+        trailing = {
+            Switch(
+                checked = checked,
+                onCheckedChange = onChange,
+                enabled = enabled,
+                modifier = Modifier.clearAndSetSemantics {},
+            )
+        },
         modifier = Modifier.toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onChange),
     )
 }
