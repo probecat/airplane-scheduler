@@ -1,12 +1,12 @@
 package dev.probecat.airplanescheduler.ui.schedules
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -37,7 +36,6 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDialog
 import androidx.compose.material3.TimePickerDialogDefaults
 import androidx.compose.material3.TimePickerDisplayMode
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -58,7 +56,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -291,24 +288,29 @@ private fun DayChips(
     modifier: Modifier = Modifier,
     onToggle: (DayOfWeek) -> Unit,
 ) {
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         for (day in format.week) {
             val selected = day in days
             val colors = MaterialTheme.colorScheme
+            val shape = RoundedCornerShape(if (selected) 50 else 30)
             Surface(
-                shape = CircleShape,
-                color = if (selected) colors.primary else Color.Transparent,
-                contentColor = if (selected) colors.onPrimary else colors.onSurface,
-                border = if (selected) null else BorderStroke(1.dp, colors.outline),
+                shape = shape,
+                color = if (selected) colors.primaryContainer else colors.surfaceContainerLowest,
+                contentColor = if (selected) colors.onPrimaryContainer else colors.onSurface,
                 modifier = Modifier
-                    .minimumInteractiveComponentSize()
-                    .size(40.dp)
-                    .clip(CircleShape)
+                    .weight(1f)
+                    .aspectRatio(1f)
+                    .clip(shape)
                     .semantics {
                         contentDescription = format.dayName(day)
                         stateDescription = if (selected) "Repeats" else "Doesn't repeat"
                     }
-                    .toggleable(value = selected, role = Role.Checkbox) { onToggle(day) },
+                    .toggleable(
+                        value = selected,
+                        interactionSource = null,
+                        indication = null,
+                        role = Role.Checkbox,
+                    ) { onToggle(day) },
             ) {
                 Column(
                     verticalArrangement = Arrangement.Center,
