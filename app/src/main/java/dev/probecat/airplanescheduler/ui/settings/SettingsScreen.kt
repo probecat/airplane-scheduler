@@ -37,11 +37,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.probecat.airplanescheduler.BuildConfig
 import dev.probecat.airplanescheduler.R
 import dev.probecat.airplanescheduler.data.ThemeMode
+import dev.probecat.airplanescheduler.system.ShizukuState
+import dev.probecat.airplanescheduler.system.ShizukuStatus
 import dev.probecat.airplanescheduler.system.notificationsAllowed
 import dev.probecat.airplanescheduler.ui.AppViewModel
 import dev.probecat.airplanescheduler.ui.ErrorText
 import dev.probecat.airplanescheduler.ui.SectionHeader
 import dev.probecat.airplanescheduler.ui.SettingRow
+import dev.probecat.airplanescheduler.ui.ShizukuDialog
 import dev.probecat.airplanescheduler.ui.Subpage
 import dev.probecat.airplanescheduler.ui.SwitchRow
 
@@ -55,6 +58,9 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
     var notifications by remember { mutableStateOf(notificationsAllowed(context)) }
     var choosingTheme by rememberSaveable { mutableStateOf(false) }
     var reminderDenied by rememberSaveable { mutableStateOf(false) }
+    val shizuku by viewModel.shizuku.collectAsStateWithLifecycle()
+    val shizukuApp = context.packageManager.getLaunchIntentForPackage(ShizukuStatus.SHIZUKU_PACKAGE)
+    var explaining by rememberSaveable { mutableStateOf<ShizukuState?>(null) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { notifications = notificationsAllowed(context) }
     // The reminder is useless without notifications, so a denial turns it back off.
     val requestNotifications =
@@ -103,6 +109,29 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
 
         SectionHeader("Permissions")
         SettingRow(
+            icon = when (shizuku) {
+                ShizukuState.READY -> R.drawable.ic_check_circle
+                ShizukuState.OFFLINE -> R.drawable.ic_error
+                ShizukuState.PERMISSION_NEEDED -> R.drawable.ic_lock
+            },
+            title = "Shizuku",
+            text = when (shizuku) {
+                ShizukuState.READY -> "Ready"
+                ShizukuState.OFFLINE -> "Not running"
+                ShizukuState.PERMISSION_NEEDED -> "Not allowed"
+            },
+            trailing = {
+                when {
+                    shizuku == ShizukuState.PERMISSION_NEEDED -> TextButton(onClick = {
+                        if (!viewModel.requestShizuku()) explaining = shizuku
+                    }) { Text("Allow") }
+                    shizukuApp != null -> TextButton(onClick = { context.startActivity(shizukuApp) }) {
+                        Text(if (shizuku == ShizukuState.READY) "Manage" else "Open")
+                    }
+                }
+            },
+        )
+        SettingRow(
             icon = R.drawable.ic_notifications,
             title = "Notifications",
             text = if (notifications) "Allowed" else "Not allowed",
@@ -121,6 +150,10 @@ fun SettingsScreen(viewModel: AppViewModel, onBack: () -> Unit) {
         )
         LinkRow(R.drawable.ic_code, "Source code", SOURCE_URL)
         LinkRow(R.drawable.ic_open_in_new, "Shizuku", SHIZUKU_URL)
+    }
+
+    explaining?.let { state ->
+        ShizukuDialog(state, onHelp = null, onDismiss = { explaining = null })
     }
 
     if (choosingTheme) {
