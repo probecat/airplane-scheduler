@@ -48,11 +48,9 @@ jobs:
         env:
           GH_TOKEN: "${{ github.token }}"
         run: |
-          apk="airplane-scheduler-${RELEASE_TAG#v}.apk"
-          cp app/build/outputs/apk/release/app-release.apk "$apk"
-          # A fixed name too, so the README's button can link to releases/latest/download.
-          cp "$apk" airplane-scheduler.apk
-          gh release create "$RELEASE_TAG" "$apk" airplane-scheduler.apk --verify-tag --generate-notes \
+          # A fixed name, so the README's button can link to releases/latest/download.
+          cp app/build/outputs/apk/release/app-release.apk airplane-scheduler.apk
+          gh release create "$RELEASE_TAG" airplane-scheduler.apk --verify-tag --generate-notes \
             --title "Airplane Scheduler $RELEASE_TAG"
       - name: Remove APKs from all but the newest three releases
         env:
