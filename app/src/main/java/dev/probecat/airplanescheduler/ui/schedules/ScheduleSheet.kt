@@ -327,7 +327,9 @@ private fun TimeDialog(title: String, minute: Int, is24Hour: Boolean, onDismiss:
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = { onConfirm(state.hour * 60 + state.minute) }) { Text("OK") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
-        title = { Text(title) },
+        title = {
+            Text(title, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(bottom = 20.dp))
+        },
         modeToggleButton = {
             TimePickerDialogDefaults.DisplayModeToggle(
                 onDisplayModeChange = {
