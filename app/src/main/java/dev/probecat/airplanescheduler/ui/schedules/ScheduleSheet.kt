@@ -12,9 +12,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
@@ -76,7 +76,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dev.probecat.airplanescheduler.R
-import dev.probecat.airplanescheduler.core.ScheduleResolver
 import dev.probecat.airplanescheduler.core.ScheduleTime
 import dev.probecat.airplanescheduler.data.Schedule
 import dev.probecat.airplanescheduler.ui.ErrorText
@@ -177,15 +176,6 @@ fun ScheduleSheet(
             DayChips(format, schedule.days, Modifier.padding(horizontal = 16.dp)) { day ->
                 draft = schedule.copy(days = if (day in schedule.days) schedule.days - day else schedule.days + day)
             }
-            onceText(schedule, now)?.let {
-                Text(
-                    it,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-                )
-            }
-
             Spacer(Modifier.height(8.dp))
             SwitchRow(
                 icon = R.drawable.ic_wifi_off,
@@ -245,17 +235,6 @@ fun ScheduleSheet(
                 picking = null
             },
         )
-    }
-}
-
-// Saving picks the first window that hasn't ended, which may be running already.
-private fun onceText(schedule: Schedule, now: LocalDateTime): String? {
-    if (!schedule.once || !schedule.enabled) return null
-    val date = ScheduleResolver.dated(schedule, now).date!!
-    return when {
-        !date.atTime(schedule.start / 60, schedule.start % 60).isAfter(now) -> "Runs once, starting now."
-        date == now.toLocalDate() -> "Runs once, starting today."
-        else -> "Runs once, starting tomorrow."
     }
 }
 
