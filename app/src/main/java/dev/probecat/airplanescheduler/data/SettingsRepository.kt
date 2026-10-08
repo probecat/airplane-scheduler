@@ -2,9 +2,12 @@ package dev.probecat.airplanescheduler.data
 
 import android.content.Context
 import androidx.core.content.edit
+import dev.probecat.airplanescheduler.core.Boundary
+import dev.probecat.airplanescheduler.core.ConnectivityPlan.Changes
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.time.LocalDateTime
 
 data class Settings(
     val theme: ThemeMode = ThemeMode.SYSTEM,
@@ -29,6 +32,23 @@ class SettingsRepository(context: Context) {
             putBoolean("remindShizuku", settings.remindShizuku)
         }
     }
+
+    // The window the app started last, so its end undoes only what the start changed.
+    var started: Boundary.Started?
+        get() = prefs.getString("startedWindow", null)?.let { window ->
+            Boundary.Started(LocalDateTime.parse(window), Changes.of(prefs.getInt("startedChanges", 0)))
+        }
+        set(value) {
+            prefs.edit {
+                if (value == null) {
+                    remove("startedWindow")
+                    remove("startedChanges")
+                } else {
+                    putString("startedWindow", value.window.toString())
+                    putInt("startedChanges", value.changes.bits)
+                }
+            }
+        }
 
     val migrated: Boolean get() = prefs.getBoolean("migrated", false)
 
