@@ -306,7 +306,7 @@ private fun ScheduleCard(
     val colors = MaterialTheme.colorScheme
     val container by animateColorAsState(if (schedule.enabled) colors.primaryContainer else colors.surfaceContainer)
     val content = if (schedule.enabled) colors.onPrimaryContainer else colors.onSurfaceVariant
-    // An em space between days and name, the gap Clock leaves.
+    // An em space between days and name.
     val summary = listOf(format.days(schedule.days), schedule.name).filter { it.isNotBlank() }.joinToString("\u2003")
     Card(
         onClick = onClick,
@@ -314,7 +314,7 @@ private fun ScheduleCard(
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
     ) {
-        // Sized like Clock's alarm cards: a summary line over a tall row with the times and switch.
+        // A summary line over a tall row with the times and switch.
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(

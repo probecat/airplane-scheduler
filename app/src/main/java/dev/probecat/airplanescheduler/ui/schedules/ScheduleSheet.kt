@@ -307,8 +307,8 @@ private fun TimeDialog(title: String, minute: Int, is24Hour: Boolean, onDismiss:
     }
 }
 
-// Edited in place like Clock's alarm name: tapping the row selects the name for typing over, and an
-// empty name shows the placeholder, even while typing.
+// Edited in place: tapping the row selects the name for typing over, and an empty name shows the
+// placeholder, even while typing.
 @Composable
 private fun NameRow(name: String, onChange: (String) -> Unit) {
     var field by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue(name)) }

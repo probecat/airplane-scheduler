@@ -31,7 +31,7 @@ class Format(val is24Hour: Boolean, val locale: Locale) {
 
     fun time(minute: Int): String = time(minute, suffixSize = TextUnit.Unspecified).text
 
-    // "11:00 PM" with a smaller marker, as Clock shows it.
+    // "11:00 PM" with a smaller marker.
     fun time(minute: Int, suffixSize: TextUnit): AnnotatedString {
         val time = LocalTime.of(minute / 60, minute % 60)
         return buildAnnotatedString {
@@ -51,7 +51,7 @@ class Format(val is24Hour: Boolean, val locale: Locale) {
         append(time(schedule.end, suffixSize))
     }
 
-    // As Clock shows them: a single run of three or more days as a range, otherwise each day.
+    // A single run of three or more days as a range, otherwise each day.
     fun days(days: Set<DayOfWeek>): String {
         if (days == Schedule.EVERY_DAY) return "Every day"
         val ordered = week.filter { it in days }
