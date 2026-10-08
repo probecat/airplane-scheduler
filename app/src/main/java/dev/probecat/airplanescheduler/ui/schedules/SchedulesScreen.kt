@@ -306,7 +306,8 @@ private fun ScheduleCard(
     val colors = MaterialTheme.colorScheme
     val container by animateColorAsState(if (schedule.enabled) colors.primaryContainer else colors.surfaceContainer)
     val content = if (schedule.enabled) colors.onPrimaryContainer else colors.onSurfaceVariant
-    val summary = listOf(format.days(schedule.days), schedule.name).filter { it.isNotBlank() }.joinToString("  ·  ")
+    // An em space between days and name, the gap Clock leaves.
+    val summary = listOf(format.days(schedule.days), schedule.name).filter { it.isNotBlank() }.joinToString("\u2003")
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
