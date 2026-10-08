@@ -146,8 +146,7 @@ fun ScheduleSheet(
                 when {
                     sameTimes -> ErrorText("Start and end can't be the same time.")
                     conflict != null -> ErrorText(
-                        "Overlaps ${format.label(conflict, now.toLocalDate())}. " +
-                            "Change the times or days, or switch that schedule off.",
+                        "This schedule overlaps ${format.label(conflict, now.toLocalDate())}.",
                     )
                     else -> Text(
                         "Airplane mode stays on for " +

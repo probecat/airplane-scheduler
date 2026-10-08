@@ -92,9 +92,7 @@ fun SchedulesScreen(viewModel: AppViewModel, onSettings: () -> Unit, onHelp: () 
     fun showConflict(conflict: Schedule) {
         scope.launch {
             snackbar.currentSnackbarData?.dismiss()
-            snackbar.showSnackbar(
-                "Overlaps ${format.label(conflict, now.toLocalDate())}. Switch that one off or change the times first.",
-            )
+            snackbar.showSnackbar("This schedule overlaps ${format.label(conflict, now.toLocalDate())}.")
         }
     }
 
